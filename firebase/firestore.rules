@@ -1,0 +1,130 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Funções auxiliares ----------
+
+    function estaAutenticado() {
+      return request.auth != null;
+    }
+
+    function ehEuMesmo(uid) {
+      return estaAutenticado() && request.auth.uid == uid;
+    }
+
+    function meuPerfil() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function souAtivo() {
+      return estaAutenticado() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        meuPerfil().status == 'ativo';
+    }
+
+    function souAdmin() {
+      return souAtivo() && meuPerfil().perfil == 'admin';
+    }
+
+    function souGestorDoSetor(setorId) {
+      return souAtivo() &&
+        meuPerfil().perfil == 'gestor' &&
+        meuPerfil().setorId == setorId;
+    }
+
+    // ---------- usuarios ----------
+    // Leitura: o próprio usuário, gestor do mesmo setor, ou admin.
+    // Escrita: só admin. Um usuário nunca edita o próprio documento
+    // (perfil, setor, status) — isso evita auto-promoção a admin.
+    match /usuarios/{uid} {
+      allow read: if ehEuMesmo(uid) || souAdmin() || souGestorDoSetor(resource.data.setorId);
+      allow create, update, delete: if souAdmin();
+    }
+
+    // ---------- setores ----------
+    // Leitura liberada a qualquer usuário ativo (necessário para exibir nome
+    // do setor em telas). Escrita só admin.
+    match /setores/{setorId} {
+      allow read: if souAtivo();
+      allow create, update, delete: if souAdmin();
+    }
+
+    // ---------- jornadas ----------
+    match /jornadas/{jornadaId} {
+      allow read: if souAtivo();
+      allow create, update, delete: if souAdmin();
+    }
+
+    // ---------- registros_ponto ----------
+    //
+    // ID do documento é determinístico: {usuarioId}_{data}_{tipo}
+    // (ex: "abc123_2026-08-20_ENTRADA"). Isso é o que torna as duas
+    // garantias abaixo possíveis sem precisar de uma query por "último
+    // registro" (Rules só conseguem fazer get() em um documento específico,
+    // não "pegar o mais recente"):
+    //
+    //  1) Duplicidade é impossível: registrar ENTRADA duas vezes no mesmo
+    //     dia significa escrever no MESMO id duas vezes — a segunda tentativa
+    //     é uma operação de "update" sobre doc já existente, e update está
+    //     bloqueado abaixo.
+    //  2) Sequência é validada checando exists() no id determinístico do
+    //     passo anterior (ex: para aceitar SAIDA_ALMOCO, precisa existir
+    //     o doc "..._ENTRADA").
+    //
+    // Cada exists()/get() extra consome 1 leitura da cota do Firestore, mas
+    // isso é no máximo +1 leitura por registro (só no passo 2, 3 e 4 do
+    // dia) — para 40 funcionários batendo 4 pontos/dia, é desprezível
+    // dentro do tier gratuito.
+    function idRegistroEsperado(usuarioId, data, tipo) {
+      return usuarioId + '_' + data + '_' + tipo;
+    }
+
+    function existeRegistroDoTipo(usuarioId, data, tipo) {
+      return exists(
+        /databases/$(database)/documents/registros_ponto/$(idRegistroEsperado(usuarioId, data, tipo))
+      );
+    }
+
+    function sequenciaValida(usuarioId, data, tipo) {
+      return
+        (tipo == 'ENTRADA') ||
+        (tipo == 'SAIDA_ALMOCO' && existeRegistroDoTipo(usuarioId, data, 'ENTRADA')) ||
+        (tipo == 'RETORNO_ALMOCO' && existeRegistroDoTipo(usuarioId, data, 'SAIDA_ALMOCO')) ||
+        (tipo == 'SAIDA' && existeRegistroDoTipo(usuarioId, data, 'RETORNO_ALMOCO'));
+    }
+
+    match /registros_ponto/{registroId} {
+      allow read: if ehEuMesmo(resource.data.usuarioId)
+        || souGestorDoSetor(resource.data.setorId)
+        || souAdmin();
+
+      allow create: if souAtivo()
+        // só cria ponto para si mesmo — nunca em nome de outro usuário
+        && ehEuMesmo(request.resource.data.usuarioId)
+        // o setor gravado tem que bater com o setor atual do usuário
+        && request.resource.data.setorId == meuPerfil().setorId
+        // o ID do doc tem que corresponder exatamente aos campos enviados
+        // (impede mandar tipo=ENTRADA no corpo mas gravar em outro ID)
+        && registroId == idRegistroEsperado(
+             request.resource.data.usuarioId, request.resource.data.data, request.resource.data.tipo
+           )
+        // o timestamp tem que ser o do servidor, nunca um valor arbitrário
+        && request.resource.data.dataHora == request.time
+        // sequência correta: não dá pra bater SAÍDA sem ter batido RETORNO antes
+        && sequenciaValida(
+             request.resource.data.usuarioId, request.resource.data.data, request.resource.data.tipo
+           );
+
+      // Ponto é imutável para todo mundo, inclusive admin, direto pelo
+      // client. Correção passa pelo fluxo de solicitacoes_correcao +
+      // aprovação, que grava via API Route com Admin SDK (próxima etapa) —
+      // e essa gravação, por rodar com credenciais de servidor, não passa
+      // por estas regras.
+      allow update, delete: if false;
+    }
+
+    // Demais coleções (solicitacoes_correcao, feriados, auditoria) serão
+    // definidas na etapa de correção de ponto e auditoria.
+  }
+}
