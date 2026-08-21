@@ -13,7 +13,7 @@ import type { DadosJornada } from "@/services/jornadas.service";
 
 function JornadasConteudo() {
   const { perfil } = useAuth();
-  const { jornadas, carregando, enviando, erro, criar, editar } = useGerenciamentoJornadas();
+  const { jornadas, carregando, enviando, erro, criar, editar, excluir } = useGerenciamentoJornadas();
   const [jornadaEmEdicao, setJornadaEmEdicao] = useState<Jornada | null>(null);
 
   if (!perfil) return null;
@@ -25,6 +25,12 @@ function JornadasConteudo() {
     } else {
       await criar(dados);
     }
+  }
+
+  async function handleExcluir(jornada: Jornada) {
+    if (!window.confirm(`Excluir a jornada "${jornada.nome}"?`)) return;
+    await excluir(jornada.id);
+    if (jornadaEmEdicao?.id === jornada.id) setJornadaEmEdicao(null);
   }
 
   return (
@@ -67,7 +73,11 @@ function JornadasConteudo() {
             Carregando jornadas…
           </div>
         ) : (
-          <TabelaJornadas jornadas={jornadas} onEditar={setJornadaEmEdicao} />
+          <TabelaJornadas
+            jornadas={jornadas}
+            onEditar={setJornadaEmEdicao}
+            onExcluir={handleExcluir}
+          />
         )}
       </main>
     </div>

@@ -1,13 +1,15 @@
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import type { Jornada } from "@/types/jornada";
 import { formatarMinutos } from "@/lib/formatadores";
 
 export function TabelaJornadas({
   jornadas,
   onEditar,
+  onExcluir,
 }: {
   jornadas: Jornada[];
   onEditar: (jornada: Jornada) => void;
+  onExcluir: (jornada: Jornada) => void;
 }) {
   if (jornadas.length === 0) {
     return (
@@ -53,6 +55,14 @@ export function TabelaJornadas({
                   className="flex h-8 w-8 items-center justify-center rounded-card text-ink-400 hover:bg-surface"
                 >
                   <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => onExcluir(jornada)}
+                  aria-label={`Excluir ${jornada.nome}`}
+                  title={`Excluir ${jornada.nome}`}
+                  className="flex h-8 w-8 items-center justify-center rounded-card text-ink-400 hover:bg-red-100 hover:text-red-600"
+                >
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </td>
             </tr>

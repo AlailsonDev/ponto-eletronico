@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import type { Jornada } from "@/types/jornada";
 
@@ -22,4 +22,8 @@ export async function criarJornada(dados: DadosJornada): Promise<void> {
 
 export async function atualizarJornada(id: string, dados: DadosJornada): Promise<void> {
   await updateDoc(doc(db, "jornadas", id), dados);
+}
+
+export async function excluirJornada(id: string): Promise<void> {
+  await deleteDoc(doc(db, "jornadas", id));
 }

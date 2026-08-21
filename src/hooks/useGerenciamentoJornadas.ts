@@ -6,6 +6,7 @@ import {
   listarJornadas,
   criarJornada,
   atualizarJornada,
+  excluirJornada,
   type DadosJornada,
 } from "@/services/jornadas.service";
 
@@ -57,5 +58,18 @@ export function useGerenciamentoJornadas() {
     }
   }
 
-  return { jornadas, carregando, enviando, erro, criar, editar };
+  async function excluir(id: string) {
+    setEnviando(true);
+    setErro(null);
+    try {
+      await excluirJornada(id);
+      await carregar();
+    } catch {
+      setErro("Não foi possível excluir a jornada.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return { jornadas, carregando, enviando, erro, criar, editar, excluir };
 }
