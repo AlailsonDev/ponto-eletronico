@@ -37,10 +37,10 @@ export function TabelaJornadas({
               <td className="px-4 py-3 font-medium text-ink-900">{jornada.nome}</td>
               <td className="px-4 py-3 font-mono tabular-nums text-ink-600">{jornada.entrada}</td>
               <td className="px-4 py-3 font-mono tabular-nums text-ink-600">
-                {jornada.saidaAlmoco}
+                {jornada.intervaloAlmocoLivre ? "Livre" : jornada.saidaAlmoco}
               </td>
               <td className="px-4 py-3 font-mono tabular-nums text-ink-600">
-                {jornada.retornoAlmoco}
+                {jornada.intervaloAlmocoLivre ? "Livre" : jornada.retornoAlmoco}
               </td>
               <td className="px-4 py-3 font-mono tabular-nums text-ink-600">{jornada.saida}</td>
               <td className="px-4 py-3 font-mono tabular-nums text-navy-800">

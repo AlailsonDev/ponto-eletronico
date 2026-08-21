@@ -3,6 +3,7 @@ import { db } from "@/lib/firebase/config";
 import type { Jornada } from "@/types/jornada";
 
 export async function buscarJornada(jornadaId: string): Promise<Jornada | null> {
+  if (!jornadaId) return null;
   const snap = await getDoc(doc(db, "jornadas", jornadaId));
   if (!snap.exists()) return null;
   return { id: snap.id, ...(snap.data() as Omit<Jornada, "id">) };

@@ -11,6 +11,7 @@ const VALOR_INICIAL: DadosJornada = {
   entrada: "08:00",
   saidaAlmoco: "12:00",
   retornoAlmoco: "13:00",
+  intervaloAlmocoLivre: false,
   saida: "17:00",
   toleranciaMinutos: 10,
   cargaHorariaDiariaMinutos: 480,
@@ -59,13 +60,21 @@ export function FormularioJornada({
     // Validação de sanidade: os horários precisam estar em ordem cronológica.
     // Não impede jornadas noturnas/incomuns no banco, só evita erro de digitação óbvio.
     const entrada = horarioParaMinutosLocal(form.entrada);
-    const saidaAlmoco = horarioParaMinutosLocal(form.saidaAlmoco);
-    const retornoAlmoco = horarioParaMinutosLocal(form.retornoAlmoco);
     const saida = horarioParaMinutosLocal(form.saida);
 
-    if (!(entrada < saidaAlmoco && saidaAlmoco < retornoAlmoco && retornoAlmoco < saida)) {
+    const horariosValidos = form.intervaloAlmocoLivre
+      ? entrada < saida
+      : (() => {
+          const saidaAlmoco = horarioParaMinutosLocal(form.saidaAlmoco);
+          const retornoAlmoco = horarioParaMinutosLocal(form.retornoAlmoco);
+          return entrada < saidaAlmoco && saidaAlmoco < retornoAlmoco && retornoAlmoco < saida;
+        })();
+
+    if (!horariosValidos) {
       setErroValidacao(
-        "Os horários precisam estar em ordem: entrada < saída para almoço < retorno < saída."
+        form.intervaloAlmocoLivre
+          ? "Os horários de entrada e saída precisam estar em ordem."
+          : "Os horários precisam estar em ordem: entrada < saída para almoço < retorno < saída."
       );
       return;
     }
@@ -96,17 +105,28 @@ export function FormularioJornada({
       <Input
         label="Saída para almoço"
         type="time"
-        required
+        required={!form.intervaloAlmocoLivre}
+        disabled={form.intervaloAlmocoLivre}
         value={form.saidaAlmoco}
         onChange={(e) => atualizar("saidaAlmoco", e.target.value)}
       />
       <Input
         label="Retorno do almoço"
         type="time"
-        required
+        required={!form.intervaloAlmocoLivre}
+        disabled={form.intervaloAlmocoLivre}
         value={form.retornoAlmoco}
         onChange={(e) => atualizar("retornoAlmoco", e.target.value)}
       />
+      <label className="flex items-center gap-2 self-end pb-2 font-body text-sm text-ink-600 sm:col-span-2">
+        <input
+          type="checkbox"
+          checked={form.intervaloAlmocoLivre ?? false}
+          onChange={(e) => atualizar("intervaloAlmocoLivre", e.target.checked)}
+          className="h-4 w-4 accent-navy-800"
+        />
+        Intervalo de almoço livre
+      </label>
       <Input
         label="Saída"
         type="time"

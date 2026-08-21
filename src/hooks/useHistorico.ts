@@ -28,7 +28,7 @@ export function useHistorico(usuario: Usuario | null) {
         // A jornada raramente muda — buscar de novo a cada consulta é
         // desperdício, mas manter cache entre meses é complexidade
         // desnecessária para 40 funcionários. Fica assim por simplicidade.
-        buscarJornada(usuario.jornadaId),
+        usuario.jornadaId ? buscarJornada(usuario.jornadaId) : Promise.resolve(null),
       ]);
       setRegistros(registrosDoPeriodo);
       setJornada(jornadaDoUsuario);
