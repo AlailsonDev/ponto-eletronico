@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import clsx from "clsx";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import { logout } from "@/services/auth.service";
 import type { Usuario } from "@/types/usuario";
 
@@ -28,8 +28,13 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
   const router = useRouter();
   const pathname = usePathname();
   const [saindo, setSaindo] = useState(false);
+  const [menuAberto, setMenuAberto] = useState(false);
 
   const links = usuario.perfil === "admin" ? LINKS_ADMIN : LINKS_BASE;
+
+  useEffect(() => {
+    setMenuAberto(false);
+  }, [pathname]);
 
   async function handleLogout() {
     setSaindo(true);
@@ -38,7 +43,7 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
   }
 
   return (
-    <header className="flex items-center justify-between border-b border-surface-border bg-white px-6 py-4">
+    <header className="relative flex items-center justify-between border-b border-surface-border bg-white px-4 py-4 sm:px-6">
       <div className="flex items-center gap-8">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-navy-800" />
@@ -66,11 +71,22 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="text-right">
+        <div className="hidden text-right sm:block">
           <p className="font-body text-sm font-medium text-ink-900">{usuario.nome}</p>
           <p className="font-body text-xs text-ink-400">{usuario.cargo}</p>
         </div>
         <button
+          type="button"
+          onClick={() => setMenuAberto((aberto) => !aberto)}
+          aria-expanded={menuAberto}
+          aria-controls="menu-navegacao-mobile"
+          aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
+          className="flex h-9 w-9 items-center justify-center rounded-card text-ink-600 transition-colors hover:bg-surface sm:hidden"
+        >
+          {menuAberto ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+        <button
+          type="button"
           onClick={handleLogout}
           disabled={saindo}
           aria-label="Sair"
@@ -79,6 +95,35 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
           <LogOut className="h-4 w-4" />
         </button>
       </div>
+
+      {menuAberto && (
+        <nav
+          id="menu-navegacao-mobile"
+          className="absolute inset-x-0 top-full z-10 border-b border-surface-border bg-white p-3 shadow-sm sm:hidden"
+        >
+          <div className="mb-3 border-b border-surface-border px-3 pb-3">
+            <p className="font-body text-sm font-medium text-ink-900">{usuario.nome}</p>
+            <p className="font-body text-xs text-ink-400">{usuario.cargo}</p>
+          </div>
+          <div className="flex flex-col gap-1">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMenuAberto(false)}
+                className={clsx(
+                  "rounded-card px-3 py-2.5 font-body text-sm font-medium",
+                  pathname === link.href
+                    ? "bg-navy-800 text-white"
+                    : "text-ink-600 hover:bg-surface"
+                )}
+              >
+                {link.rotulo}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
