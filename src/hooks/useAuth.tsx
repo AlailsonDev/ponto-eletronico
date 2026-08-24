@@ -15,6 +15,7 @@ interface AuthContextValue {
   // não foi encontrado ou está inativo — usado para barrar acesso mesmo
   // com token válido.
   sessaoInvalida: boolean;
+  emailVerificado: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -24,10 +25,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [perfil, setPerfil] = useState<Usuario | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [sessaoInvalida, setSessaoInvalida] = useState(false);
+  const [emailVerificado, setEmailVerificado] = useState(false);
 
   useEffect(() => {
     const unsubscribe = observarSessao(async (user) => {
       setFirebaseUser(user);
+      setEmailVerificado(user?.emailVerified ?? false);
 
       if (!user) {
         setPerfil(null);
@@ -39,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const perfilUsuario = await buscarPerfilUsuario(user.uid);
 
-        if (!perfilUsuario || perfilUsuario.status !== "ativo") {
+        if (!perfilUsuario || perfilUsuario.status !== "ativo" || !user.emailVerified) {
           setPerfil(null);
           setSessaoInvalida(true);
         } else {
@@ -80,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [firebaseUser]);
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, perfil, carregando, sessaoInvalida }}>
+    <AuthContext.Provider value={{ firebaseUser, perfil, carregando, sessaoInvalida, emailVerificado }}>
       {children}
     </AuthContext.Provider>
   );

@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     })));
   } catch (erro) {
     const mensagem = (erro as Error).message ?? "";
-    if (mensagem.includes("restrita") || mensagem.includes("inativo") || mensagem.includes("não encontrado")) {
+    if (mensagem.includes("restrita") || mensagem.includes("inativo") || mensagem.includes("não encontrado") || mensagem.includes("não verificado")) {
       return NextResponse.json({ erro: "Acesso negado." }, { status: 403 });
     }
     return NextResponse.json({ erro: "Não foi possível carregar a auditoria." }, { status: 500 });

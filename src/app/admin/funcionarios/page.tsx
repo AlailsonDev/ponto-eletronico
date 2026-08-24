@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { FormularioFuncionario } from "@/components/admin/FormularioFuncionario";
 import { TabelaFuncionarios } from "@/components/admin/TabelaFuncionarios";
+import type { Usuario } from "@/types/usuario";
 
 function CadastroFuncionariosConteudo() {
   const { perfil } = useAuth();
@@ -20,8 +21,16 @@ function CadastroFuncionariosConteudo() {
     erro,
     sucesso,
     cadastrar,
+    desativar,
     limparMensagens,
   } = useCadastroFuncionarios();
+
+  async function handleDesativar(funcionario: Usuario) {
+    if (!window.confirm(`Desativar o funcionário "${funcionario.nome}"? Ele não poderá mais acessar o sistema, mas seus dados e registros serão preservados.`)) {
+      return;
+    }
+    await desativar(funcionario.uid);
+  }
 
   if (!perfil) return null;
 
@@ -97,7 +106,11 @@ function CadastroFuncionariosConteudo() {
               <h2 className="mb-3 font-display text-sm font-semibold text-ink-900">
                 Funcionários cadastrados ({funcionarios.length})
               </h2>
-              <TabelaFuncionarios funcionarios={funcionarios} setores={setores} />
+              <TabelaFuncionarios
+                funcionarios={funcionarios}
+                setores={setores}
+                onDesativar={handleDesativar}
+              />
             </section>
           </div>
         )}

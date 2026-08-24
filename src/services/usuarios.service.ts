@@ -34,3 +34,15 @@ export async function listarFuncionarios(): Promise<Usuario[]> {
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ uid: d.id, ...(d.data() as Omit<Usuario, "uid">) }));
 }
+
+export async function desativarFuncionario(uid: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sua sessão expirou. Faça login novamente.");
+
+  const resposta = await fetch(`/api/usuarios/${uid}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${await user.getIdToken()}` },
+  });
+  const dados = await resposta.json();
+  if (!resposta.ok) throw new Error(dados.erro ?? "Não foi possível desativar o funcionário.");
+}

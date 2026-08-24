@@ -11,13 +11,13 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, perfisPermitidos }: ProtectedRouteProps) {
-  const { firebaseUser, perfil, carregando, sessaoInvalida } = useAuth();
+  const { firebaseUser, perfil, carregando, sessaoInvalida, emailVerificado } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (carregando) return;
 
-    if (!firebaseUser || sessaoInvalida || !perfil) {
+    if (!firebaseUser || sessaoInvalida || !perfil || !emailVerificado) {
       router.replace("/login");
       return;
     }
@@ -27,9 +27,9 @@ export function ProtectedRoute({ children, perfisPermitidos }: ProtectedRoutePro
       // manda de volta para a home do perfil dele, não para o login.
       router.replace(rotaPadraoPorPerfil(perfil.perfil));
     }
-  }, [carregando, firebaseUser, perfil, sessaoInvalida, perfisPermitidos, router]);
+  }, [carregando, firebaseUser, perfil, sessaoInvalida, emailVerificado, perfisPermitidos, router]);
 
-  if (carregando || !firebaseUser || !perfil) {
+  if (carregando || !firebaseUser || !perfil || !emailVerificado) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface">
         <p className="font-body text-sm text-ink-400">Carregando…</p>

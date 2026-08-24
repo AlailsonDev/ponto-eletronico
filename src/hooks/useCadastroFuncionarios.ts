@@ -6,7 +6,7 @@ import type { Jornada } from "@/types/jornada";
 import type { NovoUsuarioInput, Usuario } from "@/types/usuario";
 import { listarSetoresAtivos } from "@/services/setores.service";
 import { listarJornadas } from "@/services/jornadas.service";
-import { criarFuncionario, listarFuncionarios } from "@/services/usuarios.service";
+import { criarFuncionario, desativarFuncionario, listarFuncionarios } from "@/services/usuarios.service";
 
 export function useCadastroFuncionarios() {
   const [setores, setSetores] = useState<Setor[]>([]);
@@ -55,6 +55,23 @@ export function useCadastroFuncionarios() {
     }
   }
 
+  async function desativar(uid: string) {
+    setErro(null);
+    setSucesso(null);
+    setEnviando(true);
+    try {
+      await desativarFuncionario(uid);
+      setFuncionarios((atuais) =>
+        atuais.map((item) => (item.uid === uid ? { ...item, status: "inativo" } : item))
+      );
+      setSucesso("Funcionário desativado com sucesso.");
+    } catch (err) {
+      setErro((err as Error)?.message ?? "Não foi possível desativar o funcionário.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   return {
     setores,
     jornadas,
@@ -64,6 +81,7 @@ export function useCadastroFuncionarios() {
     erro,
     sucesso,
     cadastrar,
+    desativar,
     limparMensagens: () => {
       setErro(null);
       setSucesso(null);

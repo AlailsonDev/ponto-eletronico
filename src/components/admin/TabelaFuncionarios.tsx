@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { UserX, Users } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import type { Usuario } from "@/types/usuario";
 import type { Setor } from "@/types/setor";
@@ -12,9 +12,11 @@ const RÓTULO_PERFIL: Record<Usuario["perfil"], string> = {
 export function TabelaFuncionarios({
   funcionarios,
   setores,
+  onDesativar,
 }: {
   funcionarios: Usuario[];
   setores: Setor[];
+  onDesativar: (funcionario: Usuario) => void;
 }) {
   const nomeDoSetor = (setorId: string) => setores.find((s) => s.id === setorId)?.nome ?? "—";
 
@@ -29,7 +31,7 @@ export function TabelaFuncionarios({
 
   return (
     <div className="overflow-x-auto rounded-card border border-surface-border bg-white">
-      <table className="w-full min-w-[720px] border-collapse font-body text-sm">
+      <table className="w-full min-w-[820px] border-collapse font-body text-sm">
         <thead>
           <tr className="border-b border-surface-border text-left text-xs font-semibold uppercase tracking-wide text-ink-400">
             <th className="px-4 py-3">Nome</th>
@@ -37,6 +39,7 @@ export function TabelaFuncionarios({
             <th className="px-4 py-3">Setor</th>
             <th className="px-4 py-3">Perfil</th>
             <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">Ação</th>
           </tr>
         </thead>
         <tbody>
@@ -53,6 +56,20 @@ export function TabelaFuncionarios({
                 <Badge cor={f.status === "ativo" ? "green" : "neutral"}>
                   {f.status === "ativo" ? "Ativo" : "Inativo"}
                 </Badge>
+              </td>
+              <td className="px-4 py-3">
+                {f.status === "ativo" && (
+                  <button
+                    type="button"
+                    onClick={() => onDesativar(f)}
+                    aria-label={`Desativar ${f.nome}`}
+                    title={`Desativar ${f.nome}`}
+                    className="inline-flex items-center gap-1.5 rounded-card px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                  >
+                    <UserX className="h-3.5 w-3.5" />
+                    Desativar
+                  </button>
+                )}
               </td>
             </tr>
           ))}

@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(solicitacoes);
   } catch (erro) {
     const mensagem = (erro as Error).message ?? "";
-    if (mensagem.includes("restrita") || mensagem.includes("inativo") || mensagem.includes("não encontrado")) {
+    if (mensagem.includes("restrita") || mensagem.includes("inativo") || mensagem.includes("não encontrado") || mensagem.includes("não verificado")) {
       return NextResponse.json({ erro: "Acesso negado." }, { status: 403 });
     }
     return NextResponse.json({ erro: "Não foi possível carregar as solicitações." }, { status: 500 });
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ erro: "Dados da correção inválidos." }, { status: 400 });
     }
     const mensagem = (erro as Error).message ?? "";
-    if (mensagem.includes("restrita") || mensagem.includes("inativo") || mensagem.includes("não encontrado")) {
+    if (mensagem.includes("restrita") || mensagem.includes("inativo") || mensagem.includes("não encontrado") || mensagem.includes("não verificado")) {
       return NextResponse.json({ erro: "Acesso negado." }, { status: 403 });
     }
     return NextResponse.json({ erro: "Não foi possível processar a correção." }, { status: 500 });

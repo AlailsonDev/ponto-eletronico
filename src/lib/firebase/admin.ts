@@ -40,6 +40,9 @@ export const adminDb: Firestore = getFirestore(adminApp);
  */
 export async function verificarTokenAdmin(idToken: string) {
   const decoded = await adminAuth.verifyIdToken(idToken);
+  if (!decoded.email_verified) {
+    throw new Error("E-mail não verificado.");
+  }
 
   const usuarioDoc = await adminDb.collection("usuarios").doc(decoded.uid).get();
   if (!usuarioDoc.exists) {
@@ -59,6 +62,9 @@ export async function verificarTokenAdmin(idToken: string) {
 
 export async function verificarTokenAtivo(idToken: string) {
   const decoded = await adminAuth.verifyIdToken(idToken);
+  if (!decoded.email_verified) {
+    throw new Error("E-mail não verificado.");
+  }
   const usuarioDoc = await adminDb.collection("usuarios").doc(decoded.uid).get();
   if (!usuarioDoc.exists || usuarioDoc.data()?.status !== "ativo") {
     throw new Error("Usuário inativo ou não encontrado.");

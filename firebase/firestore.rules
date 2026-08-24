@@ -9,6 +9,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function emailVerificado() {
+      return estaAutenticado() && request.auth.token.email_verified == true;
+    }
+
     function ehEuMesmo(uid) {
       return estaAutenticado() && request.auth.uid == uid;
     }
@@ -18,7 +22,7 @@ service cloud.firestore {
     }
 
     function souAtivo() {
-      return estaAutenticado() &&
+      return emailVerificado() &&
         exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
         meuPerfil().status == 'ativo';
     }

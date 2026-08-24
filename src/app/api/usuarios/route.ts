@@ -113,7 +113,8 @@ export async function POST(request: NextRequest) {
     if (
       mensagem.includes("restrita a administradores") ||
       mensagem.includes("inativo") ||
-      mensagem.includes("não encontrado")
+      mensagem.includes("não encontrado") ||
+      mensagem.includes("não verificado")
     ) {
       return NextResponse.json({ erro: "Acesso negado." }, { status: 403 });
     }

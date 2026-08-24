@@ -2,6 +2,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  reload,
   onAuthStateChanged,
   type User,
 } from "firebase/auth";
@@ -30,6 +32,14 @@ export async function login(email: string, senha: string): Promise<User> {
 
 export async function logout(): Promise<void> {
   await signOut(auth);
+}
+
+export async function enviarEmailVerificacao(user: User): Promise<void> {
+  await sendEmailVerification(user);
+}
+
+export async function atualizarUsuarioAutenticado(user: User): Promise<void> {
+  await reload(user);
 }
 
 export async function solicitarRecuperacaoSenha(email: string): Promise<void> {

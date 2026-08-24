@@ -5,8 +5,16 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Clock3, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { login, traduzirErroFirebase, buscarPerfilUsuario, solicitarRecuperacaoSenha } from "@/services/auth.service";
+import {
+  login,
+  traduzirErroFirebase,
+  buscarPerfilUsuario,
+  solicitarRecuperacaoSenha,
+  enviarEmailVerificacao,
+  atualizarUsuarioAutenticado,
+} from "@/services/auth.service";
 import { rotaPadraoPorPerfil } from "@/components/layout/ProtectedRoute";
+import { auth } from "@/lib/firebase/config";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,6 +26,8 @@ export default function LoginPage() {
   const [modoRecuperacao, setModoRecuperacao] = useState(false);
   const [mensagemRecuperacao, setMensagemRecuperacao] = useState<string | null>(null);
   const [agora, setAgora] = useState<Date | null>(null);
+  const [emailNaoVerificado, setEmailNaoVerificado] = useState(false);
+  const [reenviandoVerificacao, setReenviandoVerificacao] = useState(false);
 
   // Relógio local é só decorativo/informativo aqui — o timestamp que
   // efetivamente conta para o ponto vem sempre do serverTimestamp() do Firestore.
@@ -30,6 +40,7 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setErro(null);
+    setEmailNaoVerificado(false);
     setCarregando(true);
 
     try {
@@ -42,12 +53,55 @@ export default function LoginPage() {
         return;
       }
 
+      if (!user.emailVerified) {
+        setEmailNaoVerificado(true);
+        setErro(null);
+        try {
+          await enviarEmailVerificacao(user);
+        } catch {
+          setErro("Não foi possível enviar o e-mail agora. Use o botão de reenvio em alguns instantes.");
+        }
+        setCarregando(false);
+        return;
+      }
+
       router.push(rotaPadraoPorPerfil(perfilUsuario.perfil));
     } catch (err) {
       const codigo = (err as { code?: string })?.code ?? "";
       setErro(traduzirErroFirebase(codigo));
       setCarregando(false);
     }
+  }
+
+  async function reenviarVerificacao() {
+    const user = auth.currentUser;
+    if (!user) {
+      setErro("Sua sessão expirou. Faça login novamente para receber o e-mail.");
+      return;
+    }
+    setReenviandoVerificacao(true);
+    setErro(null);
+    try {
+      await enviarEmailVerificacao(user);
+      setErro("E-mail de verificação reenviado. Confira sua caixa de entrada e a pasta de spam.");
+    } catch {
+      setErro("Não foi possível reenviar agora. Aguarde alguns instantes e tente novamente.");
+    } finally {
+      setReenviandoVerificacao(false);
+    }
+  }
+
+  async function verificarEmail() {
+    const user = auth.currentUser;
+    if (!user) return;
+    setCarregando(true);
+    await atualizarUsuarioAutenticado(user);
+    if (user.emailVerified) {
+      window.location.reload();
+      return;
+    }
+    setCarregando(false);
+    setErro("A verificação ainda não foi identificada. Clique no link recebido e tente novamente.");
   }
 
   async function handleRecuperacao(event: FormEvent) {
@@ -120,6 +174,24 @@ export default function LoginPage() {
           </p>
 
           {!modoRecuperacao ? (
+            emailNaoVerificado ? (
+              <div className="flex flex-col gap-4">
+                <div className="rounded-card border border-amber-600/20 bg-amber-100 px-3.5 py-3 font-body text-sm text-amber-700">
+                  Seu e-mail ainda não foi verificado. Acesse o link enviado para sua caixa de entrada
+                  (confira também a pasta de spam) antes de entrar no sistema.
+                </div>
+                {erro && <div role="status" className="rounded-card border border-green-600/20 bg-green-100 px-3.5 py-2.5 font-body text-sm text-green-600">{erro}</div>}
+                <Button type="button" onClick={verificarEmail} carregando={carregando} className="w-full">
+                  Já verifiquei meu e-mail
+                </Button>
+                <Button type="button" variant="secondary" onClick={reenviarVerificacao} carregando={reenviandoVerificacao} className="w-full">
+                  Reenviar e-mail de verificação
+                </Button>
+                <button type="button" onClick={() => setEmailNaoVerificado(false)} className="self-center font-body text-sm text-navy-700 hover:underline">
+                  Voltar ao login
+                </button>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
               <Input
                 label="E-mail"
@@ -174,6 +246,7 @@ export default function LoginPage() {
                 Esqueci minha senha
               </button>
             </form>
+            )
           ) : (
             <form onSubmit={handleRecuperacao} className="flex flex-col gap-4" noValidate>
               <Input

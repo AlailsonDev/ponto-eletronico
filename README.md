@@ -13,6 +13,8 @@
 - **Correção de ponto** — funcionário solicita ajuste de horário pelo histórico; admin revisa em `/admin/correcoes` e aprova ou rejeita. A aprovação ocorre em transação na API com Admin SDK, marcando o registro como corrigido e mantendo o ponto imutável para o client.
 - **Auditoria** — ações de cadastro de funcionário e decisão de correção são registradas em `auditoria` por Admin SDK e consultadas por administradores em `/admin/auditoria`. A gravação da correção é atômica com a alteração do ponto.
 - **Dias de trabalho nas jornadas** — cada jornada permite selecionar os dias da semana. Por padrão, novas jornadas usam segunda a sexta; sábado e domingo ficam desmarcados, e o funcionário não pode registrar ponto nos dias excluídos.
+- **Verificação de e-mail** — contas novas são bloqueadas até `emailVerified` ser verdadeiro. No primeiro login, o Firebase envia automaticamente o e-mail; a tela permite reenviar a mensagem e atualizar a verificação após o clique no link. A conta também precisa continuar ativa.
+- **Desativação de funcionários** — administradores podem desativar uma conta em `/admin/funcionarios`. O documento e os registros de ponto são preservados, o acesso é bloqueado no Authentication e a ação é registrada em `auditoria`.
 
 **O MVP original (seções 29 da especificação) está completo, e o sistema já não depende mais do Firebase Console para operação do dia a dia.**
 
