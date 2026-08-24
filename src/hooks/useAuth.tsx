@@ -2,8 +2,10 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "firebase/auth";
-import { observarSessao, buscarPerfilUsuario } from "@/services/auth.service";
+import { observarSessao, buscarPerfilUsuario, logout } from "@/services/auth.service";
 import type { Usuario } from "@/types/usuario";
+
+const TEMPO_INATIVIDADE_MS = 5 * 60 * 1000;
 
 interface AuthContextValue {
   firebaseUser: User | null;
@@ -54,6 +56,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+
+    let temporizador: ReturnType<typeof setTimeout>;
+
+    const iniciarTemporizador = () => {
+      clearTimeout(temporizador);
+      temporizador = setTimeout(() => {
+        logout().catch(() => {});
+      }, TEMPO_INATIVIDADE_MS);
+    };
+
+    const eventosDeAtividade = ["mousedown", "keydown", "touchstart", "scroll"];
+    eventosDeAtividade.forEach((evento) => window.addEventListener(evento, iniciarTemporizador));
+    iniciarTemporizador();
+
+    return () => {
+      clearTimeout(temporizador);
+      eventosDeAtividade.forEach((evento) => window.removeEventListener(evento, iniciarTemporizador));
+    };
+  }, [firebaseUser]);
 
   return (
     <AuthContext.Provider value={{ firebaseUser, perfil, carregando, sessaoInvalida }}>

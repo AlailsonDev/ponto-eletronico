@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
-import type { RegistroPonto, SolicitacaoCorrecao } from "@/types/registroPonto";
+import { SEQUENCIA_PONTO, type RegistroPonto, type SolicitacaoCorrecao } from "@/types/registroPonto";
 import { criarSolicitacaoCorrecao } from "@/services/ponto.service";
 import { formatarDataBR, formatarHorario } from "@/lib/formatadores";
 import { Button } from "@/components/ui/Button";
@@ -24,6 +24,11 @@ export function SolicitarCorrecao({
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const registrosOrdenados = [...registros].sort((a, b) => {
+    const data = b.data.localeCompare(a.data);
+    if (data !== 0) return data;
+    return SEQUENCIA_PONTO.indexOf(a.tipo) - SEQUENCIA_PONTO.indexOf(b.tipo);
+  });
 
   async function enviar() {
     if (!registro || novoHorario.length !== 5 || motivo.trim().length < 5) return;
@@ -59,7 +64,7 @@ export function SolicitarCorrecao({
       <h2 className="font-display text-sm font-semibold text-ink-900">Solicitar correção</h2>
       <p className="mt-1 font-body text-sm text-ink-600">Selecione um registro e informe o horário correto.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {registros.map((item) => {
+        {registrosOrdenados.map((item) => {
           const pedido = solicitacoes.find(
             (solicitacao) => solicitacao.registroId === item.id && solicitacao.status === "pendente"
           );
