@@ -11,6 +11,7 @@
 - **Etapa 7** — Dashboard administrativo: contadores em tempo real (trabalhando, em almoço, ausentes, atrasados), gráfico de distribuição (recharts) e lista de funcionários com status individual, tudo a partir de um único listener do Firestore (`registros_ponto` do dia, sem filtro de usuário).
 - **Gerenciamento de setores e jornadas** — `/admin/setores` (criar, renomear, ativar/desativar) e `/admin/jornadas` (criar/editar os 4 horários + tolerância + carga horária, com validação de ordem cronológica). Escrita direta do client, sem API Route — diferente do cadastro de funcionário, essas coleções não tocam o Firebase Auth, então a Security Rule (`souAdmin()`) já protege sozinha.
 - **Correção de ponto** — funcionário solicita ajuste de horário pelo histórico; admin revisa em `/admin/correcoes` e aprova ou rejeita. A aprovação ocorre em transação na API com Admin SDK, marcando o registro como corrigido e mantendo o ponto imutável para o client.
+- **Auditoria** — ações de cadastro de funcionário e decisão de correção são registradas em `auditoria` por Admin SDK e consultadas por administradores em `/admin/auditoria`. A gravação da correção é atômica com a alteração do ponto.
 
 **O MVP original (seções 29 da especificação) está completo, e o sistema já não depende mais do Firebase Console para operação do dia a dia.**
 
@@ -42,9 +43,8 @@ Abra `http://localhost:3000/login`.
 
 As funcionalidades pós-MVP (seção 29 da especificação, "depois construiremos") ainda não implementadas são, na ordem que fazem mais sentido tecnicamente:
 
-1. **Auditoria** — coleção `auditoria`, alimentada pelas ações administrativas (cadastro, correção, desativação).
-2. **Relatórios + exportação (Excel/CSV/PDF)**.
-3. **Geolocalização, QR Code, PWA, banco de horas, feriados, notificações**.
+1. **Relatórios + exportação (Excel/CSV/PDF)**.
+2. **Geolocalização, QR Code, PWA, banco de horas, feriados, notificações**.
 
 ## Limitações conhecidas nesta etapa (por design, não bugs)
 

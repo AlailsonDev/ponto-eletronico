@@ -142,6 +142,11 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /auditoria/{auditoriaId} {
+      allow read: if souAdmin();
+      allow create, update, delete: if false;
+    }
+
     // feriados e auditoria serão definidas em etapas futuras.
   }
 }

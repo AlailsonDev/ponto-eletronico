@@ -122,6 +122,19 @@ export async function POST(request: NextRequest) {
         processadoEm: agora,
         processadoPor: uid,
       });
+      const auditoriaRef = adminDb.collection("auditoria").doc();
+      transaction.set(auditoriaRef, {
+        acao: "correcao_ponto",
+        administradorId: uid,
+        alvoId: solicitacao.registroId,
+        detalhes: {
+          solicitacaoId: body.solicitacaoId,
+          decisao: body.decisao,
+          usuarioId: solicitacao.usuarioId,
+          novoHorario: solicitacao.novoHorario,
+        },
+        criadoEm: agora,
+      });
     });
 
     return NextResponse.json({ ok: true });

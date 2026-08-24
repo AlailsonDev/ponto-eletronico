@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, adminDb, verificarTokenAdmin } from "@/lib/firebase/admin";
 import type { NovoUsuarioInput, Perfil } from "@/types/usuario";
+import { registrarAuditoria } from "@/lib/firebase/auditoria";
 
 const PERFIS_VALIDOS: Perfil[] = ["funcionario", "gestor", "admin"];
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Lança erro se o token for inválido, o usuário estiver inativo, ou
     // não for admin — nunca confiamos apenas em "a rota existe".
-    await verificarTokenAdmin(idToken);
+    const administrador = await verificarTokenAdmin(idToken);
 
     const body = (await request.json()) as NovoUsuarioInput;
 
@@ -88,6 +89,15 @@ export async function POST(request: NextRequest) {
       await adminAuth.deleteUser(authUser.uid).catch(() => {});
       throw erroFirestore;
     }
+
+    await registrarAuditoria({
+      acao: "cadastro_funcionario",
+      administradorId: administrador.uid,
+      alvoId: authUser.uid,
+      detalhes: { nome: body.nome, matricula: body.matricula, perfil: body.perfil },
+    }).catch(() => {
+      // O cadastro já foi concluído; falha no log não deve induzir repetição.
+    });
 
     return NextResponse.json({ uid: authUser.uid }, { status: 201 });
   } catch (err) {
