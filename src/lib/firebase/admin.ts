@@ -56,3 +56,12 @@ export async function verificarTokenAdmin(idToken: string) {
 
   return { uid: decoded.uid, usuario };
 }
+
+export async function verificarTokenAtivo(idToken: string) {
+  const decoded = await adminAuth.verifyIdToken(idToken);
+  const usuarioDoc = await adminDb.collection("usuarios").doc(decoded.uid).get();
+  if (!usuarioDoc.exists || usuarioDoc.data()?.status !== "ativo") {
+    throw new Error("Usuário inativo ou não encontrado.");
+  }
+  return { uid: decoded.uid, usuario: usuarioDoc.data() };
+}

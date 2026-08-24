@@ -124,7 +124,24 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Demais coleções (solicitacoes_correcao, feriados, auditoria) serão
-    // definidas na etapa de correção de ponto e auditoria.
+    // O funcionário pode pedir a correção de um registro próprio. A decisão
+    // e a alteração do ponto acontecem exclusivamente na API com Admin SDK.
+    match /solicitacoes_correcao/{solicitacaoId} {
+      allow read: if ehEuMesmo(resource.data.usuarioId) || souAdmin();
+      allow create: if souAtivo()
+        && ehEuMesmo(request.resource.data.usuarioId)
+        && request.resource.data.setorId == meuPerfil().setorId
+        && exists(/databases/$(database)/documents/registros_ponto/$(request.resource.data.registroId))
+        && get(/databases/$(database)/documents/registros_ponto/$(request.resource.data.registroId)).data.usuarioId == request.auth.uid
+        && get(/databases/$(database)/documents/registros_ponto/$(request.resource.data.registroId)).data.data == request.resource.data.data
+        && get(/databases/$(database)/documents/registros_ponto/$(request.resource.data.registroId)).data.tipo == request.resource.data.tipo
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.motivo is string
+        && request.resource.data.motivo.size() >= 5
+        && request.resource.data.novoHorario is string;
+      allow update, delete: if false;
+    }
+
+    // feriados e auditoria serão definidas em etapas futuras.
   }
 }

@@ -26,6 +26,24 @@ export interface RegistroPonto {
   editadoPorCorrecao: boolean;
 }
 
+export type StatusSolicitacaoCorrecao = "pendente" | "aprovada" | "rejeitada";
+
+export interface SolicitacaoCorrecao {
+  id: string;
+  registroId: string;
+  usuarioId: string;
+  setorId: string;
+  data: string;
+  tipo: TipoRegistro;
+  novoHorario: string; // "HH:mm"
+  motivo: string;
+  status: StatusSolicitacaoCorrecao;
+  criadoEm: Timestamp;
+  processadoEm?: Timestamp;
+  processadoPor?: string;
+  resposta?: string;
+}
+
 export interface ResumoJornadaDia {
   data: string;
   entrada?: RegistroPonto;

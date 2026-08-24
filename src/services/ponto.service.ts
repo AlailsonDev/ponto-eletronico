@@ -7,10 +7,15 @@ import {
   query,
   collection,
   where,
+  addDoc,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
-import type { RegistroPonto, TipoRegistro } from "@/types/registroPonto";
+import type {
+  RegistroPonto,
+  SolicitacaoCorrecao,
+  TipoRegistro,
+} from "@/types/registroPonto";
 import type { Usuario } from "@/types/usuario";
 
 /**
@@ -125,6 +130,45 @@ export async function buscarRegistrosPeriodo(
     .map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) } as RegistroPonto))
     .filter((registro) => registro.data >= dataInicio && registro.data <= dataFim)
     .sort((a, b) => a.data.localeCompare(b.data));
+}
+
+export async function criarSolicitacaoCorrecao(input: {
+  registro: RegistroPonto;
+  novoHorario: string;
+  motivo: string;
+  idToken: string;
+}): Promise<void> {
+  const resposta = await fetch("/api/correcoes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${input.idToken}` },
+    body: JSON.stringify({
+      acao: "criar",
+      registroId: input.registro.id,
+      novoHorario: input.novoHorario,
+      motivo: input.motivo.trim(),
+    }),
+  });
+  if (!resposta.ok) throw new Error("SOLICITACAO_NAO_ENVIADA");
+}
+
+export async function buscarSolicitacoesCorrecao(
+  usuarioId: string
+): Promise<SolicitacaoCorrecao[]> {
+  const solicitacoes = await getDocs(
+    query(collection(db, "solicitacoes_correcao"), where("usuarioId", "==", usuarioId))
+  );
+  return solicitacoes.docs.map(
+    (documento) => ({ id: documento.id, ...documento.data() } as SolicitacaoCorrecao)
+  ).sort((a, b) => b.criadoEm?.toMillis() - a.criadoEm?.toMillis());
+}
+
+export async function buscarSolicitacoesPendentes(): Promise<SolicitacaoCorrecao[]> {
+  const solicitacoes = await getDocs(
+    query(collection(db, "solicitacoes_correcao"), where("status", "==", "pendente"))
+  );
+  return solicitacoes.docs.map(
+    (documento) => ({ id: documento.id, ...documento.data() } as SolicitacaoCorrecao)
+  ).sort((a, b) => a.criadoEm?.toMillis() - b.criadoEm?.toMillis());
 }
 
 /**

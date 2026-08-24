@@ -59,6 +59,7 @@ export function useHistorico(usuario: Usuario | null) {
 
   return {
     dias,
+    registros,
     anoMesSelecionado,
     setAnoMesSelecionado,
     carregando,

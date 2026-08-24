@@ -1,17 +1,26 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useHistorico } from "@/hooks/useHistorico";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { FiltroMes } from "@/components/historico/FiltroMes";
 import { TabelaHistorico } from "@/components/historico/TabelaHistorico";
+import { SolicitarCorrecao } from "@/components/historico/SolicitarCorrecao";
+import type { SolicitacaoCorrecao } from "@/types/registroPonto";
+import { buscarSolicitacoesCorrecao } from "@/services/ponto.service";
 
 function HistoricoConteudo() {
   const { perfil } = useAuth();
-  const { dias, anoMesSelecionado, setAnoMesSelecionado, carregando, erro } =
+  const { dias, registros, anoMesSelecionado, setAnoMesSelecionado, carregando, erro } =
     useHistorico(perfil);
+  const [solicitacoes, setSolicitacoes] = useState<SolicitacaoCorrecao[]>([]);
+
+  useEffect(() => {
+    if (perfil) buscarSolicitacoesCorrecao(perfil.uid).then(setSolicitacoes).catch(() => {});
+  }, [perfil]);
 
   if (!perfil) return null;
 
@@ -45,7 +54,14 @@ function HistoricoConteudo() {
             Carregando histórico…
           </div>
         ) : (
-          <TabelaHistorico dias={dias} />
+          <>
+            <TabelaHistorico dias={dias} />
+            <SolicitarCorrecao
+              registros={registros}
+              solicitacoes={solicitacoes}
+              onCriada={(solicitacao) => setSolicitacoes((atuais) => [solicitacao, ...atuais])}
+            />
+          </>
         )}
       </main>
     </div>
