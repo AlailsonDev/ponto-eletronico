@@ -2,6 +2,8 @@ import { Pencil, Trash2 } from "lucide-react";
 import type { Jornada } from "@/types/jornada";
 import { formatarMinutos } from "@/lib/formatadores";
 
+const NOMES_DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
 export function TabelaJornadas({
   jornadas,
   onEditar,
@@ -30,6 +32,7 @@ export function TabelaJornadas({
             <th className="px-4 py-3">Retorno</th>
             <th className="px-4 py-3">Saída</th>
             <th className="px-4 py-3">Carga diária</th>
+            <th className="px-4 py-3">Dias</th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
@@ -47,6 +50,12 @@ export function TabelaJornadas({
               <td className="px-4 py-3 font-mono tabular-nums text-ink-600">{jornada.saida}</td>
               <td className="px-4 py-3 font-mono tabular-nums text-navy-800">
                 {formatarMinutos(jornada.cargaHorariaDiariaMinutos)}
+              </td>
+              <td className="px-4 py-3 text-ink-600">
+                {[...(jornada.diasTrabalho ?? [1, 2, 3, 4, 5])]
+                  .sort((a, b) => a - b)
+                  .map((dia) => NOMES_DIAS[dia])
+                  .join(", ")}
               </td>
               <td className="px-4 py-3 text-right">
                 <button

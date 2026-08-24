@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { Usuario } from "@/types/usuario";
-import type { Jornada } from "@/types/jornada";
+import { diasTrabalhoDaJornada, type Jornada } from "@/types/jornada";
 import type { RegistroPonto } from "@/types/registroPonto";
 import { observarRegistrosDoDia, registrarPonto, traduzirErroPonto } from "@/services/ponto.service";
 import { buscarJornada } from "@/services/jornadas.service";
@@ -18,6 +18,8 @@ export function usePontoHoje(usuario: Usuario | null) {
   const [erro, setErro] = useState<string | null>(null);
 
   const hoje = dataHojeISO();
+  const diaDaSemana = new Date(`${hoje}T12:00:00`).getDay();
+  const diaNaoTrabalhado = !!jornada && !diasTrabalhoDaJornada(jornada).includes(diaDaSemana);
 
   // Listener único dos registros de hoje — dispara de novo só se o uid mudar.
   useEffect(() => {
@@ -49,6 +51,7 @@ export function usePontoHoje(usuario: Usuario | null) {
 
   const registrar = useCallback(async () => {
     if (!usuario) return;
+    if (diaNaoTrabalhado) return;
     const proximoTipo = proximoTipoPermitido(registros);
     if (!proximoTipo) return;
 
@@ -64,10 +67,10 @@ export function usePontoHoje(usuario: Usuario | null) {
     } finally {
       setRegistrando(false);
     }
-  }, [usuario, registros, hoje]);
+  }, [usuario, registros, hoje, diaNaoTrabalhado]);
 
   const resumo = calcularResumoDia(hoje, registros, jornada);
-  const proximoTipo = proximoTipoPermitido(registros);
+  const proximoTipo = diaNaoTrabalhado ? null : proximoTipoPermitido(registros);
 
-  return { resumo, proximoTipo, registrar, registrando, carregando, erro, limparErro: () => setErro(null) };
+  return { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro: () => setErro(null) };
 }

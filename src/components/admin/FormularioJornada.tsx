@@ -15,7 +15,18 @@ const VALOR_INICIAL: DadosJornada = {
   saida: "17:00",
   toleranciaMinutos: 10,
   cargaHorariaDiariaMinutos: 480,
+  diasTrabalho: [1, 2, 3, 4, 5],
 };
+
+const DIAS_SEMANA = [
+  { valor: 1, nome: "Segunda" },
+  { valor: 2, nome: "Terça" },
+  { valor: 3, nome: "Quarta" },
+  { valor: 4, nome: "Quinta" },
+  { valor: 5, nome: "Sexta" },
+  { valor: 6, nome: "Sábado" },
+  { valor: 0, nome: "Domingo" },
+];
 
 interface FormularioJornadaProps {
   enviando: boolean;
@@ -42,7 +53,7 @@ export function FormularioJornada({
   useEffect(() => {
     if (jornadaEmEdicao) {
       const { id: _id, ...dados } = jornadaEmEdicao;
-      setForm(dados);
+      setForm({ ...dados, diasTrabalho: dados.diasTrabalho ?? [1, 2, 3, 4, 5] });
     } else {
       setForm(VALOR_INICIAL);
     }
@@ -51,6 +62,14 @@ export function FormularioJornada({
 
   function atualizar<K extends keyof DadosJornada>(campo: K, valor: DadosJornada[K]) {
     setForm((atual) => ({ ...atual, [campo]: valor }));
+  }
+
+  function alternarDia(dia: number) {
+    const diasAtuais = form.diasTrabalho ?? [1, 2, 3, 4, 5];
+    atualizar(
+      "diasTrabalho",
+      diasAtuais.includes(dia) ? diasAtuais.filter((item) => item !== dia) : [...diasAtuais, dia].sort()
+    );
   }
 
   function handleSubmit(event: FormEvent) {
@@ -76,6 +95,11 @@ export function FormularioJornada({
           ? "Os horários de entrada e saída precisam estar em ordem."
           : "Os horários precisam estar em ordem: entrada < saída para almoço < retorno < saída."
       );
+      return;
+    }
+
+    if (!form.diasTrabalho?.length) {
+      setErroValidacao("Selecione pelo menos um dia de trabalho.");
       return;
     }
 
@@ -151,6 +175,26 @@ export function FormularioJornada({
         value={form.cargaHorariaDiariaMinutos}
         onChange={(e) => atualizar("cargaHorariaDiariaMinutos", Number(e.target.value))}
       />
+
+      <fieldset className="sm:col-span-2">
+        <legend className="mb-2 font-body text-sm font-medium text-ink-700">Dias de trabalho</legend>
+        <div className="flex flex-wrap gap-2">
+          {DIAS_SEMANA.map((dia) => (
+            <label
+              key={dia.valor}
+              className="flex cursor-pointer items-center gap-2 rounded-card border border-surface-border px-3 py-2 font-body text-sm text-ink-600"
+            >
+              <input
+                type="checkbox"
+                checked={(form.diasTrabalho ?? [1, 2, 3, 4, 5]).includes(dia.valor)}
+                onChange={() => alternarDia(dia.valor)}
+                className="h-4 w-4 accent-navy-800"
+              />
+              {dia.nome}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {erroValidacao && (
         <p className="sm:col-span-2 font-body text-sm text-red-600">{erroValidacao}</p>

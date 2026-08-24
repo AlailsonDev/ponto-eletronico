@@ -14,7 +14,7 @@ import { saudacaoPorHorario } from "@/lib/formatadores";
 function DashboardConteudo() {
   const { perfil } = useAuth();
   const agora = useRelogio();
-  const { resumo, proximoTipo, registrar, registrando, carregando, erro, limparErro } =
+  const { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro } =
     usePontoHoje(perfil);
 
   if (!perfil) return null;
@@ -71,6 +71,7 @@ function DashboardConteudo() {
 
             <BotaoRegistro
               proximoTipo={proximoTipo}
+              diaNaoTrabalhado={diaNaoTrabalhado}
               registrando={registrando}
               onRegistrar={registrar}
             />

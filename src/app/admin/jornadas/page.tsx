@@ -42,7 +42,8 @@ function JornadasConteudo() {
           <h1 className="font-display text-2xl font-semibold text-ink-900">Jornadas</h1>
           <p className="font-body text-sm text-ink-600">
             Configure os horários de entrada, almoço e saída usados no cálculo de atraso e
-            hora extra. O intervalo de almoço também pode ser livre.
+            hora extra. O intervalo de almoço também pode ser livre. Selecione os dias em que a
+            jornada se aplica; sábado e domingo começam desmarcados.
           </p>
         </div>
 

@@ -5,11 +5,21 @@ import type { TipoRegistro } from "@/types/registroPonto";
 
 interface BotaoRegistroProps {
   proximoTipo: TipoRegistro | null;
+  diaNaoTrabalhado?: boolean;
   registrando: boolean;
   onRegistrar: () => void;
 }
 
-export function BotaoRegistro({ proximoTipo, registrando, onRegistrar }: BotaoRegistroProps) {
+export function BotaoRegistro({ proximoTipo, diaNaoTrabalhado, registrando, onRegistrar }: BotaoRegistroProps) {
+  if (diaNaoTrabalhado) {
+    return (
+      <div className="rounded-card border border-surface-border bg-white px-6 py-8 text-center">
+        <p className="font-display text-base font-semibold text-ink-900">Dia sem expediente</p>
+        <p className="font-body text-sm text-ink-600">A jornada não prevê registros para hoje.</p>
+      </div>
+    );
+  }
+
   if (!proximoTipo) {
     return (
       <div className="flex flex-col items-center gap-2 rounded-card border border-green-600/20 bg-green-100 px-6 py-8 text-center">
