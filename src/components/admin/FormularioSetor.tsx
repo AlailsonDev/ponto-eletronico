@@ -27,7 +27,7 @@ export function FormularioSetor({
           label="Nome do setor"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          placeholder="Ex: Controladoria"
+          placeholder="Ex: Transparência"
           required
         />
       </div>

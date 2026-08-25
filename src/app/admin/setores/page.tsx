@@ -23,7 +23,7 @@ function SetoresConteudo() {
         <div className="mb-6">
           <h1 className="font-display text-2xl font-semibold text-ink-900">Setores</h1>
           <p className="font-body text-sm text-ink-600">
-            Gerencie os setores usados no cadastro de funcionários e na visão do gestor.
+            Gerencie os setores usados no cadastro de funcionários.
           </p>
         </div>
 
