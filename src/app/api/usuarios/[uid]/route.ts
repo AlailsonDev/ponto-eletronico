@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, adminDb, verificarTokenAdmin } from "@/lib/firebase/admin";
+import type { EditarUsuarioInput, Perfil } from "@/types/usuario";
+
+const PERFIS_VALIDOS: Perfil[] = ["funcionario", "gestor", "admin"];
 
 export async function PATCH(
   request: NextRequest,
@@ -14,7 +17,9 @@ export async function PATCH(
     if (!idToken) return NextResponse.json({ erro: "Não autenticado." }, { status: 401 });
 
     const administrador = await verificarTokenAdmin(idToken);
-    if (!params.uid || params.uid === administrador.uid) {
+    const body = (await request.json().catch(() => ({}))) as Partial<EditarUsuarioInput>;
+    const editando = Object.keys(body).length > 0;
+    if (!params.uid || (!editando && params.uid === administrador.uid)) {
       return NextResponse.json({ erro: "Não é possível desativar a própria conta." }, { status: 400 });
     }
 
@@ -24,6 +29,24 @@ export async function PATCH(
       return NextResponse.json({ erro: "Funcionário não encontrado." }, { status: 404 });
     }
     const usuario = usuarioSnapshot.data()!;
+    if (editando) {
+      if (!body.nome || !body.matricula || !body.email || !body.cargo || !body.setorId || !body.jornadaId || !body.dataAdmissao || !body.perfil || !PERFIS_VALIDOS.includes(body.perfil)) {
+        return NextResponse.json({ erro: "Dados do funcionário inválidos." }, { status: 400 });
+      }
+      await adminAuth.updateUser(params.uid, { email: body.email, displayName: body.nome });
+      await usuarioRef.update({
+        nome: body.nome,
+        matricula: body.matricula,
+        email: body.email,
+        cargo: body.cargo,
+        setorId: body.setorId,
+        perfil: body.perfil,
+        jornadaId: body.jornadaId,
+        dataAdmissao: new Date(body.dataAdmissao),
+        atualizadoEm: FieldValue.serverTimestamp(),
+      });
+      return NextResponse.json({ uid: params.uid, status: usuario.status });
+    }
     if (usuario.status === "inativo") {
       return NextResponse.json({ erro: "Este funcionário já está inativo." }, { status: 409 });
     }

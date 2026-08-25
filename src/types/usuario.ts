@@ -32,3 +32,5 @@ export interface NovoUsuarioInput {
   dataAdmissao: string; // ISO date do form
   senhaProvisoria: string;
 }
+
+export type EditarUsuarioInput = Omit<NovoUsuarioInput, "senhaProvisoria">;

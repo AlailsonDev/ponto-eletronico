@@ -1,6 +1,6 @@
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase/config";
-import type { NovoUsuarioInput, Usuario } from "@/types/usuario";
+import type { EditarUsuarioInput, NovoUsuarioInput, Usuario } from "@/types/usuario";
 
 /**
  * Chama a API Route /api/usuarios, anexando o ID Token do admin logado.
@@ -45,4 +45,20 @@ export async function desativarFuncionario(uid: string): Promise<void> {
   });
   const dados = await resposta.json();
   if (!resposta.ok) throw new Error(dados.erro ?? "Não foi possível desativar o funcionário.");
+}
+
+export async function editarFuncionario(uid: string, input: EditarUsuarioInput): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sua sessão expirou. Faça login novamente.");
+
+  const resposta = await fetch(`/api/usuarios/${uid}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${await user.getIdToken()}`,
+    },
+    body: JSON.stringify(input),
+  });
+  const dados = await resposta.json();
+  if (!resposta.ok) throw new Error(dados.erro ?? "Não foi possível editar o funcionário.");
 }

@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { FormularioJornada } from "@/components/admin/FormularioJornada";
 import { TabelaJornadas } from "@/components/admin/TabelaJornadas";
+import { ConfirmacaoModal } from "@/components/ui/ConfirmacaoModal";
 import type { Jornada } from "@/types/jornada";
 import type { DadosJornada } from "@/services/jornadas.service";
 
@@ -15,6 +16,7 @@ function JornadasConteudo() {
   const { perfil } = useAuth();
   const { jornadas, carregando, enviando, erro, criar, editar, excluir } = useGerenciamentoJornadas();
   const [jornadaEmEdicao, setJornadaEmEdicao] = useState<Jornada | null>(null);
+  const [jornadaParaExcluir, setJornadaParaExcluir] = useState<Jornada | null>(null);
 
   if (!perfil) return null;
 
@@ -27,10 +29,15 @@ function JornadasConteudo() {
     }
   }
 
-  async function handleExcluir(jornada: Jornada) {
-    if (!window.confirm(`Excluir a jornada "${jornada.nome}"?`)) return;
-    await excluir(jornada.id);
-    if (jornadaEmEdicao?.id === jornada.id) setJornadaEmEdicao(null);
+  function handleExcluir(jornada: Jornada) {
+    setJornadaParaExcluir(jornada);
+  }
+
+  async function confirmarExclusao() {
+    if (!jornadaParaExcluir) return;
+    await excluir(jornadaParaExcluir.id);
+    if (jornadaEmEdicao?.id === jornadaParaExcluir.id) setJornadaEmEdicao(null);
+    setJornadaParaExcluir(null);
   }
 
   return (
@@ -81,6 +88,15 @@ function JornadasConteudo() {
           />
         )}
       </main>
+      <ConfirmacaoModal
+        aberto={!!jornadaParaExcluir}
+        titulo="Excluir jornada"
+        mensagem={jornadaParaExcluir ? `Excluir a jornada "${jornadaParaExcluir.nome}"?` : ""}
+        textoConfirmar="Excluir"
+        variante="danger"
+        onCancelar={() => setJornadaParaExcluir(null)}
+        onConfirmar={confirmarExclusao}
+      />
     </div>
   );
 }

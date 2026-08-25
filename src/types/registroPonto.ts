@@ -32,6 +32,7 @@ export interface SolicitacaoCorrecao {
   id: string;
   registroId: string;
   usuarioId: string;
+  usuarioNome?: string;
   setorId: string;
   data: string;
   tipo: TipoRegistro;

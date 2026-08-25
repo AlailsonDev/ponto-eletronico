@@ -24,13 +24,19 @@ export async function GET(request: NextRequest) {
       .collection("solicitacoes_correcao")
       .where("status", "==", "pendente")
       .get();
-    const solicitacoes = snapshot.docs
+    const solicitacoes = await Promise.all(snapshot.docs
       .sort((a, b) => {
         const primeiro = a.data().criadoEm?.toMillis?.() ?? 0;
         const segundo = b.data().criadoEm?.toMillis?.() ?? 0;
         return primeiro - segundo;
       })
-      .map((documento) => ({ id: documento.id, ...documento.data() }));
+      .map(async (documento) => {
+        const dados = documento.data();
+        if (dados.usuarioNome) return { id: documento.id, ...dados };
+
+        const usuario = await adminDb.collection("usuarios").doc(dados.usuarioId).get();
+        return { id: documento.id, ...dados, usuarioNome: usuario.data()?.nome };
+      }));
     return NextResponse.json(solicitacoes);
   } catch (erro) {
     const mensagem = (erro as Error).message ?? "";
@@ -49,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as CorrecaoInput;
     if (body.acao === "criar") {
-      const { uid } = await verificarTokenAtivo(idToken);
+      const { uid, usuario } = await verificarTokenAtivo(idToken);
       if (!body.registroId || !body.novoHorario || !body.motivo || body.motivo.trim().length < 5) {
         return NextResponse.json({ erro: "Dados da solicitação inválidos." }, { status: 400 });
       }
@@ -64,6 +70,7 @@ export async function POST(request: NextRequest) {
       const solicitacao = await adminDb.collection("solicitacoes_correcao").add({
         registroId: body.registroId,
         usuarioId: uid,
+        usuarioNome: usuario?.nome ?? null,
         setorId: registro.setorId,
         data: registro.data,
         tipo: registro.tipo,

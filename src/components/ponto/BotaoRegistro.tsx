@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ConfirmacaoModal } from "@/components/ui/ConfirmacaoModal";
 import { rotuloBotaoParaTipo } from "@/lib/validacaoSequencia";
 import type { TipoRegistro } from "@/types/registroPonto";
 
@@ -11,6 +13,12 @@ interface BotaoRegistroProps {
 }
 
 export function BotaoRegistro({ proximoTipo, diaNaoTrabalhado, registrando, onRegistrar }: BotaoRegistroProps) {
+  const [confirmacaoAberta, setConfirmacaoAberta] = useState(false);
+
+  function confirmarRegistro() {
+    setConfirmacaoAberta(true);
+  }
+
   if (diaNaoTrabalhado) {
     return (
       <div className="rounded-card border border-surface-border bg-white px-6 py-8 text-center">
@@ -35,12 +43,24 @@ export function BotaoRegistro({ proximoTipo, diaNaoTrabalhado, registrando, onRe
   }
 
   return (
-    <Button
-      onClick={onRegistrar}
-      carregando={registrando}
-      className="w-full py-6 text-base"
-    >
-      {registrando ? "Registrando…" : rotuloBotaoParaTipo(proximoTipo)}
-    </Button>
+    <>
+      <Button
+        onClick={confirmarRegistro}
+        carregando={registrando}
+        className="w-full py-6 text-base"
+      >
+        {registrando ? "Registrando…" : rotuloBotaoParaTipo(proximoTipo)}
+      </Button>
+      <ConfirmacaoModal
+        aberto={confirmacaoAberta}
+        titulo="Confirmar batida de ponto"
+        mensagem={`Deseja confirmar ${rotuloBotaoParaTipo(proximoTipo)}?`}
+        onCancelar={() => setConfirmacaoAberta(false)}
+        onConfirmar={() => {
+          setConfirmacaoAberta(false);
+          onRegistrar();
+        }}
+      />
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { UserX, Users } from "lucide-react";
+import { Pencil, UserX, Users } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import type { Usuario } from "@/types/usuario";
 import type { Setor } from "@/types/setor";
@@ -12,10 +12,12 @@ const RÓTULO_PERFIL: Record<Usuario["perfil"], string> = {
 export function TabelaFuncionarios({
   funcionarios,
   setores,
+  onEditar,
   onDesativar,
 }: {
   funcionarios: Usuario[];
   setores: Setor[];
+  onEditar: (funcionario: Usuario) => void;
   onDesativar: (funcionario: Usuario) => void;
 }) {
   const nomeDoSetor = (setorId: string) => setores.find((s) => s.id === setorId)?.nome ?? "—";
@@ -58,7 +60,18 @@ export function TabelaFuncionarios({
                 </Badge>
               </td>
               <td className="px-4 py-3">
-                {f.status === "ativo" && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onEditar(f)}
+                    aria-label={`Editar ${f.nome}`}
+                    title={`Editar ${f.nome}`}
+                    className="inline-flex items-center gap-1.5 rounded-card px-2.5 py-1.5 text-xs font-medium text-navy-800 hover:bg-surface"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
+                  </button>
+                  {f.status === "ativo" && (
                   <button
                     type="button"
                     onClick={() => onDesativar(f)}
@@ -69,7 +82,8 @@ export function TabelaFuncionarios({
                     <UserX className="h-3.5 w-3.5" />
                     Desativar
                   </button>
-                )}
+                  )}
+                </div>
               </td>
             </tr>
           ))}

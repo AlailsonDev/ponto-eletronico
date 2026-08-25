@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +9,7 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { FormularioFuncionario } from "@/components/admin/FormularioFuncionario";
 import { TabelaFuncionarios } from "@/components/admin/TabelaFuncionarios";
+import { ConfirmacaoModal } from "@/components/ui/ConfirmacaoModal";
 import type { Usuario } from "@/types/usuario";
 
 function CadastroFuncionariosConteudo() {
@@ -21,15 +23,31 @@ function CadastroFuncionariosConteudo() {
     erro,
     sucesso,
     cadastrar,
+    editar,
     desativar,
     limparMensagens,
   } = useCadastroFuncionarios();
+  const [funcionarioParaDesativar, setFuncionarioParaDesativar] = useState<Usuario | null>(null);
+  const [funcionarioEmEdicao, setFuncionarioEmEdicao] = useState<Usuario | null>(null);
 
-  async function handleDesativar(funcionario: Usuario) {
-    if (!window.confirm(`Desativar o funcionário "${funcionario.nome}"? Ele não poderá mais acessar o sistema, mas seus dados e registros serão preservados.`)) {
+  function handleDesativar(funcionario: Usuario) {
+    setFuncionarioParaDesativar(funcionario);
+  }
+
+  async function handleSubmit(input: Parameters<typeof cadastrar>[0]) {
+    if (funcionarioEmEdicao) {
+      const { senhaProvisoria: _senhaProvisoria, ...dados } = input;
+      await editar(funcionarioEmEdicao.uid, dados);
+      setFuncionarioEmEdicao(null);
       return;
     }
-    await desativar(funcionario.uid);
+    await cadastrar(input);
+  }
+
+  async function confirmarDesativacao() {
+    if (!funcionarioParaDesativar) return;
+    await desativar(funcionarioParaDesativar.uid);
+    setFuncionarioParaDesativar(null);
   }
 
   if (!perfil) return null;
@@ -92,13 +110,15 @@ function CadastroFuncionariosConteudo() {
           <div className="flex flex-col gap-8">
             <section className="rounded-card border border-surface-border bg-white p-6">
               <h2 className="mb-4 font-display text-sm font-semibold text-ink-900">
-                Novo funcionário
+                {funcionarioEmEdicao ? `Editando "${funcionarioEmEdicao.nome}"` : "Novo funcionário"}
               </h2>
               <FormularioFuncionario
                 setores={setores}
                 jornadas={jornadas}
                 enviando={enviando}
-                onSubmit={cadastrar}
+                funcionario={funcionarioEmEdicao}
+                onSubmit={handleSubmit}
+                onCancelarEdicao={() => setFuncionarioEmEdicao(null)}
               />
             </section>
 
@@ -109,12 +129,26 @@ function CadastroFuncionariosConteudo() {
               <TabelaFuncionarios
                 funcionarios={funcionarios}
                 setores={setores}
+                onEditar={setFuncionarioEmEdicao}
                 onDesativar={handleDesativar}
               />
             </section>
           </div>
         )}
       </main>
+      <ConfirmacaoModal
+        aberto={!!funcionarioParaDesativar}
+        titulo="Desativar funcionário"
+        mensagem={
+          funcionarioParaDesativar
+            ? `Desativar o funcionário "${funcionarioParaDesativar.nome}"? Ele não poderá mais acessar o sistema, mas seus dados e registros serão preservados.`
+            : ""
+        }
+        textoConfirmar="Desativar"
+        variante="danger"
+        onCancelar={() => setFuncionarioParaDesativar(null)}
+        onConfirmar={confirmarDesativacao}
+      />
     </div>
   );
 }
