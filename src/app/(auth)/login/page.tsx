@@ -167,10 +167,15 @@ export default function LoginPage() {
           <h1 className="font-display text-2xl font-semibold text-ink-900">
             {modoRecuperacao ? "Recuperar senha" : "Entrar"}
           </h1>
-          <p className="mt-1 mb-8 font-body text-sm text-ink-600">
+          {/* <p className="mt-1 mb-8 font-body text-sm text-ink-600">
             {modoRecuperacao
               ? "Informe seu e-mail cadastrado para receber o link de redefinição."
               : "Use sua matrícula ou e-mail institucional."}
+          </p> */}
+          <p className="mt-1 mb-8 font-body text-sm text-ink-600">
+            {modoRecuperacao
+              ? "Informe seu e-mail cadastrado para receber o link de redefinição."
+              : "Use o e-mail que você forneceu ao administrador para se cadastrar."}
           </p>
 
           {!modoRecuperacao ? (
