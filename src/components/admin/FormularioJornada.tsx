@@ -53,7 +53,11 @@ export function FormularioJornada({
   useEffect(() => {
     if (jornadaEmEdicao) {
       const { id: _id, ...dados } = jornadaEmEdicao;
-      setForm({ ...dados, diasTrabalho: dados.diasTrabalho ?? [1, 2, 3, 4, 5] });
+      setForm({
+        ...dados,
+        toleranciaMinutos: dados.toleranciaMinutos ?? 0,
+        diasTrabalho: dados.diasTrabalho ?? [1, 2, 3, 4, 5],
+      });
     } else {
       setForm(VALOR_INICIAL);
     }
@@ -100,6 +104,11 @@ export function FormularioJornada({
 
     if (!form.diasTrabalho?.length) {
       setErroValidacao("Selecione pelo menos um dia de trabalho.");
+      return;
+    }
+
+    if (!Number.isInteger(form.toleranciaMinutos) || form.toleranciaMinutos < 0) {
+      setErroValidacao("A tolerância deve ser um número inteiro maior ou igual a zero.");
       return;
     }
 
@@ -160,9 +169,10 @@ export function FormularioJornada({
       />
 
       <Input
-        label="Tolerância (minutos)"
+        label="Tolerância para atraso (minutos)"
         type="number"
         min={0}
+        step={1}
         required
         value={form.toleranciaMinutos}
         onChange={(e) => atualizar("toleranciaMinutos", Number(e.target.value))}

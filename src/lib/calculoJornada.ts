@@ -26,10 +26,6 @@ export function calcularResumoDia(
     incompleta: false,
   };
 
-  // Sem jornada configurada, não há como calcular atraso/hora extra —
-  // ainda assim mostramos os horários batidos.
-  if (!jornada) return resumo;
-
   // Minutos de intervalo (só computável se os dois marcos do almoço existem)
   if (saidaAlmoco?.dataHora && retornoAlmoco?.dataHora) {
     const retornoMinutos = timestampParaMinutosDoDia(retornoAlmoco.dataHora);
@@ -49,9 +45,16 @@ export function calcularResumoDia(
     }
   }
 
+  // Sem jornada configurada, ainda mostramos os valores derivados dos
+  // registros; apenas atraso e hora extra dependem da jornada.
+  if (!jornada) return resumo;
+
   // Atraso: entrada real vs. horário previsto + tolerância
   if (entrada?.dataHora) {
-    const entradaPrevistaMin = horarioParaMinutos(jornada.entrada) + jornada.toleranciaMinutos;
+    const toleranciaMinutos = Number.isFinite(jornada.toleranciaMinutos)
+      ? Math.max(0, jornada.toleranciaMinutos)
+      : 0;
+    const entradaPrevistaMin = horarioParaMinutos(jornada.entrada) + toleranciaMinutos;
     const entradaRealMin = timestampParaMinutosDoDia(entrada.dataHora);
     if (entradaRealMin !== undefined) {
       resumo.minutosAtraso = Math.max(0, entradaRealMin - entradaPrevistaMin);
