@@ -14,7 +14,7 @@ import type { Usuario } from "@/types/usuario";
 // Mapeia códigos de erro técnicos do Firebase para mensagens amigáveis.
 // Nunca mostramos "auth/invalid-credential" cru para o usuário final.
 const MENSAGENS_ERRO: Record<string, string> = {
-  "auth/invalid-credential": "Matrícula/e-mail ou senha incorretos.",
+  "auth/invalid-credential": "E-mail ou senha incorretos.",
   "auth/invalid-email": "E-mail em formato inválido.",
   "auth/user-disabled": "Este usuário foi desativado. Fale com o RH.",
   "auth/too-many-requests": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
