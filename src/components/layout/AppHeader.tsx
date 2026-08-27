@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import clsx from "clsx";
 import { LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import { logout } from "@/services/auth.service";
+import { useAuth } from "@/hooks/useAuth";
 import type { Usuario } from "@/types/usuario";
 
 // Todo perfil bate ponto próprio, então "Ponto" e "Histórico" aparecem para
@@ -29,10 +30,38 @@ const LINKS_ADMIN = [
 export function AppHeader({ usuario }: { usuario: Usuario }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { firebaseUser } = useAuth();
   const [saindo, setSaindo] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
+  const [solicitacoesPendentes, setSolicitacoesPendentes] = useState(0);
 
   const links = usuario.perfil === "admin" ? LINKS_ADMIN : LINKS_BASE;
+
+  useEffect(() => {
+    if (usuario.perfil !== "admin" || !firebaseUser) {
+      setSolicitacoesPendentes(0);
+      return;
+    }
+
+    const usuarioAutenticado = firebaseUser;
+    let ativo = true;
+    async function carregarSolicitacoesPendentes() {
+      try {
+        const token = await usuarioAutenticado.getIdToken();
+        const resposta = await fetch("/api/correcoes", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resposta.ok) return;
+        const solicitacoes = (await resposta.json()) as unknown[];
+        if (ativo) setSolicitacoesPendentes(solicitacoes.length);
+      } catch {
+        // O contador não deve impedir a navegação do cabeçalho.
+      }
+    }
+
+    carregarSolicitacoesPendentes();
+    return () => { ativo = false; };
+  }, [firebaseUser, pathname, usuario.perfil]);
 
   useEffect(() => {
     setMenuAberto(false);
@@ -60,13 +89,21 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
               key={link.href}
               href={link.href}
               className={clsx(
-                "rounded-card px-3 py-1.5 font-body text-sm font-medium transition-colors",
+                "relative rounded-card px-3 py-1.5 font-body text-sm font-medium transition-colors",
                 pathname === link.href
                   ? "bg-navy-800 text-white"
                   : "text-ink-600 hover:bg-surface"
               )}
             >
               {link.rotulo}
+              {link.href === "/admin/correcoes" && solicitacoesPendentes > 0 && (
+                <span
+                  aria-label={`${solicitacoesPendentes} solicitações pendentes`}
+                  className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 font-body text-[10px] font-bold leading-none text-white"
+                >
+                  {solicitacoesPendentes}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -114,13 +151,21 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
                 href={link.href}
                 onClick={() => setMenuAberto(false)}
                 className={clsx(
-                  "rounded-card px-3 py-2.5 font-body text-sm font-medium",
+                  "relative rounded-card px-3 py-2.5 font-body text-sm font-medium",
                   pathname === link.href
                     ? "bg-navy-800 text-white"
                     : "text-ink-600 hover:bg-surface"
                 )}
               >
                 {link.rotulo}
+                {link.href === "/admin/correcoes" && solicitacoesPendentes > 0 && (
+                  <span
+                    aria-label={`${solicitacoesPendentes} solicitações pendentes`}
+                    className="absolute right-2 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 font-body text-[10px] font-bold leading-none text-white"
+                  >
+                    {solicitacoesPendentes}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
