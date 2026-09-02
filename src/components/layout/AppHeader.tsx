@@ -75,11 +75,11 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
   }
 
   return (
-    <header className="relative flex items-center justify-between border-b border-surface-border bg-white px-4 py-4 sm:px-6">
+    <header className="relative flex items-center justify-between border-b-4 border-yellow-300 bg-navy-800 px-4 py-3 text-white shadow-sm sm:px-6">
       <div className="flex items-center gap-8">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-navy-800" />
-          <span className="font-display text-sm font-semibold text-navy-800">
+          <ShieldCheck className="h-5 w-5 text-yellow-300" />
+          <span className="font-display text-sm font-semibold text-white">
             Ponto Eletrônico
           </span>
         </div>
@@ -92,8 +92,8 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
               className={clsx(
                 "relative rounded-card px-3 py-1.5 font-body text-sm font-medium transition-colors",
                 pathname === link.href
-                  ? "bg-navy-800 text-white"
-                  : "text-ink-600 hover:bg-surface"
+                  ? "bg-yellow-300 text-navy-950"
+                  : "text-white/80 hover:bg-white/10 hover:text-white"
               )}
             >
               {link.rotulo}
@@ -112,8 +112,8 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
 
       <div className="flex items-center gap-4">
         <div className="hidden text-right sm:block">
-          <p className="font-body text-sm font-medium text-ink-900">{usuario.nome}</p>
-          <p className="font-body text-xs text-ink-400">{usuario.cargo}</p>
+          <p className="font-body text-sm font-medium text-white">{usuario.nome}</p>
+          <p className="font-body text-xs text-white/60">{usuario.cargo}</p>
         </div>
         <button
           type="button"
@@ -121,7 +121,7 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
           aria-expanded={menuAberto}
           aria-controls="menu-navegacao-mobile"
           aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
-          className="flex h-9 w-9 items-center justify-center rounded-card text-ink-600 transition-colors hover:bg-surface sm:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-card text-white/80 transition-colors hover:bg-white/10 sm:hidden"
         >
           {menuAberto ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -130,7 +130,7 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
           onClick={handleLogout}
           disabled={saindo}
           aria-label="Sair"
-          className="flex h-9 w-9 items-center justify-center rounded-card text-ink-400 transition-colors hover:bg-surface hover:text-red-600 disabled:opacity-60"
+          className="flex h-9 w-9 items-center justify-center rounded-card text-white/70 transition-colors hover:bg-white/10 hover:text-yellow-300 disabled:opacity-60"
         >
           <LogOut className="h-4 w-4" />
         </button>
@@ -139,11 +139,11 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
       {menuAberto && (
         <nav
           id="menu-navegacao-mobile"
-          className="absolute inset-x-0 top-full z-10 border-b border-surface-border bg-white p-3 shadow-sm sm:hidden"
+          className="absolute inset-x-0 top-full z-10 border-b border-surface-border bg-navy-900 p-3 shadow-sm sm:hidden"
         >
           <div className="mb-3 border-b border-surface-border px-3 pb-3">
-            <p className="font-body text-sm font-medium text-ink-900">{usuario.nome}</p>
-            <p className="font-body text-xs text-ink-400">{usuario.cargo}</p>
+            <p className="font-body text-sm font-medium text-white">{usuario.nome}</p>
+            <p className="font-body text-xs text-white/60">{usuario.cargo}</p>
           </div>
           <div className="flex flex-col gap-1">
             {links.map((link) => (
@@ -154,8 +154,8 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
                 className={clsx(
                   "relative rounded-card px-3 py-2.5 font-body text-sm font-medium",
                   pathname === link.href
-                    ? "bg-navy-800 text-white"
-                    : "text-ink-600 hover:bg-surface"
+                    ? "bg-yellow-300 text-navy-950"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
                 )}
               >
                 {link.rotulo}

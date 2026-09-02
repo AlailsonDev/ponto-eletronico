@@ -1,28 +1,27 @@
 import type { Config } from "tailwindcss";
 
 // Tokens de design do sistema de ponto eletrônico.
-// Paleta institucional: navy profundo + teal para estados "ativos".
-// Evitamos os defaults genéricos de IA (cream/terracota, dark/neon).
+// Paleta institucional: azul de marca, amarelo de destaque e verde de presença.
 const config: Config = {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
         navy: {
-          950: "#0E1526",
-          900: "#161F35",
-          800: "#1B2A4A",
-          700: "#243761",
-          600: "#2F4578",
+          950: "#071B4A",
+          900: "#0D2B72",
+          800: "#1739A6",
+          700: "#2850C7",
+          600: "#4669D9",
         },
         teal: {
-          600: "#0E7C86",
-          500: "#12939F",
-          100: "#DFF3F4",
+          600: "#087F4E",
+          500: "#16A05F",
+          100: "#DDF6E8",
         },
         amber: {
-          600: "#C2410C",
-          100: "#FDEBD9",
+          600: "#A96800",
+          100: "#FFF1B8",
         },
         green: {
           600: "#15803D",
@@ -33,14 +32,14 @@ const config: Config = {
           100: "#FBE1E1",
         },
         surface: {
-          DEFAULT: "#F7F8FA",
+          DEFAULT: "#F5F8FF",
           card: "#FFFFFF",
-          border: "#E4E7EC",
+          border: "#DCE5F5",
         },
         ink: {
-          900: "#1A1F2B",
-          600: "#4A5266",
-          400: "#8A93A6",
+          900: "#14213D",
+          600: "#52617A",
+          400: "#8A98B0",
         },
       },
       fontFamily: {
@@ -52,7 +51,7 @@ const config: Config = {
         card: "12px",
       },
       boxShadow: {
-        card: "0 1px 2px rgba(20, 26, 43, 0.04), 0 1px 6px rgba(20, 26, 43, 0.06)",
+        card: "0 1px 2px rgba(23, 57, 166, 0.04), 0 1px 6px rgba(23, 57, 166, 0.08)",
       },
     },
   },

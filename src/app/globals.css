@@ -10,6 +10,15 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+body {
+  background: #f5f8ff;
+}
+
+::selection {
+  background: #ffe36e;
+  color: #071b4a;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
