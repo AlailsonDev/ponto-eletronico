@@ -132,6 +132,23 @@ export async function buscarRegistrosPeriodo(
     .sort((a, b) => a.data.localeCompare(b.data));
 }
 
+/** Busca os registros de todos os funcionários em um período para relatórios administrativos. */
+export async function buscarTodosRegistrosPeriodo(
+  dataInicio: string,
+  dataFim: string
+): Promise<RegistroPonto[]> {
+  const q = query(
+    collection(db, "registros_ponto"),
+    where("data", ">=", dataInicio),
+    where("data", "<=", dataFim)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs
+    .map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) } as RegistroPonto))
+    .sort((a, b) => a.data.localeCompare(b.data));
+}
+
 export async function criarSolicitacaoCorrecao(input: {
   registro: RegistroPonto;
   novoHorario: string;

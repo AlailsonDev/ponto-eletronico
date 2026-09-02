@@ -19,6 +19,7 @@ const LINKS_BASE = [
 
 const LINKS_ADMIN = [
   { href: "/admin/dashboard", rotulo: "Painel" },
+  { href: "/admin/relatorios", rotulo: "Relatórios" },
   { href: "/admin/correcoes", rotulo: "Correções" },
   { href: "/admin/auditoria", rotulo: "Auditoria" },
   ...LINKS_BASE,

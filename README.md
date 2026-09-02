@@ -15,6 +15,7 @@
 - **Dias de trabalho nas jornadas** — cada jornada permite selecionar os dias da semana. Por padrão, novas jornadas usam segunda a sexta; sábado e domingo ficam desmarcados, e o funcionário não pode registrar ponto nos dias excluídos.
 - **Verificação de e-mail** — contas novas são bloqueadas até `emailVerified` ser verdadeiro. No primeiro login, o Firebase envia automaticamente o e-mail; a tela permite reenviar a mensagem e atualizar a verificação após o clique no link. A conta também precisa continuar ativa.
 - **Desativação de funcionários** — administradores podem desativar uma conta em `/admin/funcionarios`. O documento e os registros de ponto são preservados, o acesso é bloqueado no Authentication e a ação é registrada em `auditoria`.
+- **Relatórios + exportação** — administradores consultam o resumo mensal por funcionário em `/admin/relatorios`, com filtros por mês/nome e exportação Excel em abas de resumo e detalhamento diário.
 
 **O MVP original (seções 29 da especificação) está completo, e o sistema já não depende mais do Firebase Console para operação do dia a dia.**
 
@@ -46,8 +47,7 @@ Abra `http://localhost:3000/login`.
 
 As funcionalidades pós-MVP (seção 29 da especificação, "depois construiremos") ainda não implementadas são, na ordem que fazem mais sentido tecnicamente:
 
-1. **Relatórios + exportação (Excel/CSV/PDF)**.
-2. **Geolocalização, QR Code, PWA, banco de horas, feriados, notificações**.
+1. **Geolocalização, QR Code, PWA, banco de horas, feriados, notificações**.
 
 ## Limitações conhecidas nesta etapa (por design, não bugs)
 
