@@ -157,7 +157,7 @@ export default function LoginPage() {
         </div>
 
         <p className="font-body text-xs text-white/40">
-          Acesso restrito aos servidores da CGM do município do Jaboatão dos Guararapes.
+          Acesso restrito aos servidores da Controladoria Geral do município do Jaboatão dos Guararapes.
         </p>
       </div>
 
