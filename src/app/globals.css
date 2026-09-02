@@ -10,8 +10,55 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+html[data-font-size="large"] {
+  font-size: 112.5%;
+}
+
+html[data-font-size="larger"] {
+  font-size: 125%;
+}
+
 body {
   background: #f5f8ff;
+}
+
+html[data-high-contrast="true"] body {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+html[data-high-contrast="true"] body * {
+  background-color: #000000 !important;
+  border-color: #ffffff !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+}
+
+html[data-high-contrast="true"] body a {
+  color: #ffff00 !important;
+  text-decoration: underline;
+}
+
+html[data-high-contrast="true"] body input,
+html[data-high-contrast="true"] body select,
+html[data-high-contrast="true"] body textarea {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+html[data-high-contrast="true"] body img {
+  background-color: transparent !important;
+}
+
+html[data-high-contrast="true"] :focus-visible {
+  outline: 3px solid #ffff00 !important;
+  outline-offset: 3px;
+}
+
+html[data-high-contrast="true"] [data-accessibility-widget] button {
+  background: #000000 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
 }
 
 ::selection {

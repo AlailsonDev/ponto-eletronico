@@ -124,9 +124,9 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-screen font-body md:grid-cols-2">
       {/* Painel institucional */}
-      <div className="relative hidden flex-col justify-between overflow-hidden border-r-8 border-yellow-300 bg-navy-900 p-12 text-white md:flex">
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-navy-900 p-12 text-white md:flex">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-yellow-300" />
+          <ShieldCheck className="h-5 w-5 text-teal-500" />
           <span className="font-display text-sm font-semibold tracking-wide">
             SISTEMA DE PONTO ELETRÔNICO
           </span>
@@ -134,7 +134,7 @@ export default function LoginPage() {
 
         <div>
           <div className="flex items-center gap-2 text-navy-950/0">
-            <Clock3 className="h-8 w-8 text-yellow-300" />
+            <Clock3 className="h-8 w-8 text-teal-500" />
           </div>
           <p
             className="font-mono text-6xl font-light tabular-nums text-white"
@@ -157,7 +157,7 @@ export default function LoginPage() {
         </div>
 
         <p className="font-body text-xs text-white/40">
-          Acesso restrito aos servidores da Controladoria Geral do município do Jaboatão dos Guararapes.
+          Acesso restrito aos servidores da CGM do município do Jaboatão dos Guararapes.
         </p>
       </div>
 

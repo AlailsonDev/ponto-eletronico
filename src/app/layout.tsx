@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sora, Inter, IBM_Plex_Mono } from "next/font/google";
 import { AuthProvider } from "@/hooks/useAuth";
+import { AccessibilityWidget } from "@/components/layout/AccessibilityWidget";
 import "./globals.css";
 
 const sora = Sora({ subsets: ["latin"], variable: "--font-sora", weight: ["500", "600", "700"] });
@@ -20,7 +21,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR">
       <body className={`${sora.variable} ${inter.variable} ${plexMono.variable} bg-surface font-body text-ink-900`}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <AccessibilityWidget />
+        </AuthProvider>
       </body>
     </html>
   );
