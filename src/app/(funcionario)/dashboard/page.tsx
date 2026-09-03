@@ -10,9 +10,12 @@ import { StatusJornada } from "@/components/ponto/StatusJornada";
 import { BotaoRegistro } from "@/components/ponto/BotaoRegistro";
 import { ResumoJornadaCards } from "@/components/ponto/ResumoJornadaCards";
 import { saudacaoPorHorario } from "@/lib/formatadores";
+import { useRetrospectiva } from "@/hooks/useRetrospectiva";
+import { RetrospectivaModal } from "@/components/retrospectiva/RetrospectivaModal";
 
 function DashboardConteudo() {
   const { perfil } = useAuth();
+  const retrospectiva = useRetrospectiva(perfil);
   const agora = useRelogio();
   const { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro } =
     usePontoHoje(perfil);
@@ -23,7 +26,7 @@ function DashboardConteudo() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <AppHeader usuario={perfil} />
+      <AppHeader usuario={retrospectiva.retrospectiva ? { ...perfil, insigniaAtual: retrospectiva.retrospectiva.insignia } : perfil} />
 
       <main className="mx-auto max-w-2xl px-4 py-8">
         <div className="mb-6 flex items-end justify-between">
@@ -41,6 +44,15 @@ function DashboardConteudo() {
                 : ""}
             </p>
           </div>
+          {retrospectiva.retrospectiva && (
+            <button
+              type="button"
+              onClick={retrospectiva.abrir}
+              className="font-body text-xs font-semibold text-navy-800 underline underline-offset-4 hover:text-teal-600"
+            >
+              Minha retrospectiva
+            </button>
+          )}
           <p className="font-mono text-2xl tabular-nums text-navy-800" aria-live="polite">
             {agora
               ? agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
@@ -85,6 +97,7 @@ function DashboardConteudo() {
           </div>
         )}
       </main>
+      {retrospectiva.retrospectiva && <RetrospectivaModal retrospectiva={retrospectiva.retrospectiva} aberto={retrospectiva.aberta} onFechar={retrospectiva.fechar} />}
     </div>
   );
 }

@@ -112,7 +112,7 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
 
       <div className="flex items-center gap-4">
         <div className="hidden text-right sm:block">
-          <p className="font-body text-sm font-medium text-white">{usuario.nome}</p>
+          <p className="font-body text-sm font-medium text-white">{usuario.nome} {usuario.insigniaAtual && <span title={`Insígnia ${usuario.insigniaAtual.name} no período ${usuario.insigniaPeriodo ?? "anterior"}`} aria-label={`Insígnia ${usuario.insigniaAtual.name}, período ${usuario.insigniaPeriodo ?? "anterior"}`}>{usuario.insigniaAtual.emoji}</span>}</p>
           <p className="font-body text-xs text-white/60">{usuario.cargo}</p>
         </div>
         <button
@@ -142,7 +142,7 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
           className="absolute inset-x-0 top-full z-10 border-b border-surface-border bg-navy-900 p-3 shadow-sm sm:hidden"
         >
           <div className="mb-3 border-b border-surface-border px-3 pb-3">
-            <p className="font-body text-sm font-medium text-white">{usuario.nome}</p>
+            <p className="font-body text-sm font-medium text-white">{usuario.nome} {usuario.insigniaAtual && <span title={`Insígnia ${usuario.insigniaAtual.name} no período ${usuario.insigniaPeriodo ?? "anterior"}`} aria-label={`Insígnia ${usuario.insigniaAtual.name}, período ${usuario.insigniaPeriodo ?? "anterior"}`}>{usuario.insigniaAtual.emoji}</span>}</p>
             <p className="font-body text-xs text-white/60">{usuario.cargo}</p>
           </div>
           <div className="flex flex-col gap-1">

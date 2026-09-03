@@ -1,4 +1,5 @@
 import type { Timestamp } from "firebase/firestore";
+import type { InsigniaRegularidade } from "@/types/retrospectiva";
 
 export type Perfil = "funcionario" | "gestor" | "admin";
 export type StatusUsuario = "ativo" | "inativo";
@@ -17,6 +18,8 @@ export interface Usuario {
   dataAdmissao: Timestamp;
   criadoEm: Timestamp;
   atualizadoEm: Timestamp;
+  insigniaAtual?: InsigniaRegularidade;
+  insigniaPeriodo?: string;
 }
 
 // Formato usado no formulário de cadastro (antes de virar documento do Firestore)

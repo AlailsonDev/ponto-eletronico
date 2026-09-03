@@ -1,3 +1,14 @@
+# Retrospectiva da jornada
+
+A retrospectiva mensal é calculada no servidor a partir de `registros_ponto` e da jornada do usuário. No último dia útil, a API fecha o mês em curso, grava uma avaliação em `retrospectivas/{usuarioId}_{YYYY-MM}` e atualiza `insigniaAtual` no perfil. A avaliação é mostrada uma única vez por período; `GET /api/retrospectiva?periodo=YYYY-MM` reabre um período já salvo.
+
+## Feriados
+
+O projeto não possuía cadastro de feriados. A funcionalidade consulta a coleção `feriados`, com documentos contendo `data: "YYYY-MM-DD"`. O cadastro pode ser feito pelo Firebase Admin SDK ou por uma futura tela administrativa; enquanto a coleção estiver vazia, apenas sábado e domingo são excluídos.
+
+## Regularidade
+
+`regularidade = pontualidade * 40% + jornada cumprida * 40% + ausência de ocorrências * 20%`. Os denominadores são os dias previstos pela jornada, excluindo feriados. As faixas são Bronze (0-74%), Prata (75-89%), Ouro (90-97%) e Diamante (98-100%), centralizadas em `src/lib/retrospectiva.ts`.
 # Sistema de Ponto Eletrônico — CGM Jaboatão dos Guararapes
 
 ## Progresso até aqui

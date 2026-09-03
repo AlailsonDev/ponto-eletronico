@@ -151,6 +151,15 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // feriados e auditoria serão definidas em etapas futuras.
+    match /retrospectivas/{retrospectivaId} {
+      allow read: if souAtivo() && resource.data.usuarioId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    match /feriados/{feriadoId} {
+      allow read: if souAtivo();
+      allow create, update, delete: if souAdmin();
+    }
+
   }
 }
