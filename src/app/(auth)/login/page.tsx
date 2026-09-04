@@ -3,6 +3,8 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Clock3, ShieldCheck } from "lucide-react";
+import Image from "next/image";
+import logoCGM from "@/assets/CGM.png";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import {
@@ -162,7 +164,7 @@ export default function LoginPage() {
       </div>
 
       {/* Formulário */}
-      <div className="flex items-center justify-center bg-surface p-6 md:p-12">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-surface p-6 md:p-12">
         <div className="w-full max-w-sm">
           <h1 className="font-display text-2xl font-semibold text-ink-900">
             {modoRecuperacao ? "Recuperar senha" : "Entrar"}
@@ -288,6 +290,12 @@ export default function LoginPage() {
             </form>
           )}
         </div>
+        <Image
+          src={logoCGM}
+          alt="Controladoria Geral do Município"
+          className="mt-14 h-auto w-56 object-contain sm:w-64"
+          priority
+        />
       </div>
     </div>
   );
