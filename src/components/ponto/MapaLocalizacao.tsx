@@ -14,7 +14,7 @@ function AjustarMapa({ usuario, trabalho }: { usuario: Coordenadas; trabalho: Co
 
 export function MapaLocalizacao({ usuario, trabalho, raioMetros, valida }: { usuario: Coordenadas; trabalho: Coordenadas; raioMetros: number; valida: boolean }) {
   return (
-    <MapContainer center={[trabalho.latitude, trabalho.longitude]} zoom={17} scrollWheelZoom={false} className="h-64 w-full rounded-card">
+    <MapContainer center={[trabalho.latitude, trabalho.longitude]} zoom={17} scrollWheelZoom={false} className="relative z-0 isolate h-64 w-full rounded-card">
       <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <Circle center={[trabalho.latitude, trabalho.longitude]} radius={raioMetros} pathOptions={{ color: valida ? "#15803d" : "#dc2626", fillOpacity: 0.12 }} />
       <CircleMarker center={[trabalho.latitude, trabalho.longitude]} radius={9} pathOptions={{ color: "#183B56", fillColor: "#183B56", fillOpacity: 1 }} />
