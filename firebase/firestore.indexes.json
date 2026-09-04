@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "usuarios",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "perfil", "order": "ASCENDING" },
+        { "fieldPath": "setorId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "registros_ponto",
       "queryScope": "COLLECTION",
       "fields": [

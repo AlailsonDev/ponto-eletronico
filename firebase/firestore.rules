@@ -37,6 +37,12 @@ service cloud.firestore {
         meuPerfil().setorId == setorId;
     }
 
+    function ehFuncionarioDoSetor(usuarioId, setorId) {
+      return exists(/databases/$(database)/documents/usuarios/$(usuarioId)) &&
+        get(/databases/$(database)/documents/usuarios/$(usuarioId)).data.perfil == 'funcionario' &&
+        get(/databases/$(database)/documents/usuarios/$(usuarioId)).data.setorId == setorId;
+    }
+
     // ---------- usuarios ----------
     // Leitura: o próprio usuário, gestor do mesmo setor, ou admin.
     // Escrita: só admin. Um usuário nunca edita o próprio documento
@@ -131,7 +137,9 @@ service cloud.firestore {
     // O funcionário pode pedir a correção de um registro próprio. A decisão
     // e a alteração do ponto acontecem exclusivamente na API com Admin SDK.
     match /solicitacoes_correcao/{solicitacaoId} {
-      allow read: if ehEuMesmo(resource.data.usuarioId) || souAdmin();
+      allow read: if ehEuMesmo(resource.data.usuarioId) || souAdmin() ||
+        (souGestorDoSetor(resource.data.setorId) &&
+          ehFuncionarioDoSetor(resource.data.usuarioId, resource.data.setorId));
       allow create: if souAtivo()
         && ehEuMesmo(request.resource.data.usuarioId)
         && request.resource.data.setorId == meuPerfil().setorId

@@ -1,4 +1,4 @@
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase/config";
 import type { EditarUsuarioInput, NovoUsuarioInput, Usuario } from "@/types/usuario";
 
@@ -33,6 +33,20 @@ export async function listarFuncionarios(): Promise<Usuario[]> {
   const q = query(collection(db, "usuarios"), orderBy("nome"));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ uid: d.id, ...(d.data() as Omit<Usuario, "uid">) }));
+}
+
+export async function listarFuncionariosParaRelatorio(setorId?: string): Promise<Usuario[]> {
+  const consulta = setorId
+    ? query(
+        collection(db, "usuarios"),
+        where("perfil", "==", "funcionario"),
+        where("setorId", "==", setorId)
+      )
+    : query(collection(db, "usuarios"), orderBy("nome"));
+  const funcionarios = (await getDocs(consulta)).docs
+    .map((d) => ({ uid: d.id, ...(d.data() as Omit<Usuario, "uid">) }))
+    .filter((usuario) => usuario.perfil === "funcionario");
+  return funcionarios.sort((a, b) => a.nome.localeCompare(b.nome));
 }
 
 export async function desativarFuncionario(uid: string): Promise<void> {

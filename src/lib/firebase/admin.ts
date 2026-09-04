@@ -71,3 +71,12 @@ export async function verificarTokenAtivo(idToken: string) {
   }
   return { uid: decoded.uid, usuario: usuarioDoc.data() };
 }
+
+export async function verificarTokenGestorOuAdmin(idToken: string) {
+  const autenticacao = await verificarTokenAtivo(idToken);
+  const perfil = autenticacao.usuario?.perfil;
+  if (perfil !== "admin" && perfil !== "gestor") {
+    throw new Error("Ação restrita a gestores e administradores.");
+  }
+  return autenticacao;
+}

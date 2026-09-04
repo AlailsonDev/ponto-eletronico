@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { adminDb, verificarTokenAdmin, verificarTokenAtivo } from "@/lib/firebase/admin";
+import { adminDb, verificarTokenAtivo, verificarTokenGestorOuAdmin } from "@/lib/firebase/admin";
 import type { StatusSolicitacaoCorrecao } from "@/types/registroPonto";
 
 interface CorrecaoInput {
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
     if (!idToken) return NextResponse.json({ erro: "Não autenticado." }, { status: 401 });
 
-    await verificarTokenAdmin(idToken);
+    const { usuario } = await verificarTokenGestorOuAdmin(idToken);
     const snapshot = await adminDb
       .collection("solicitacoes_correcao")
       .where("status", "==", "pendente")
@@ -32,12 +32,15 @@ export async function GET(request: NextRequest) {
       })
       .map(async (documento) => {
         const dados = documento.data();
-        if (dados.usuarioNome) return { id: documento.id, ...dados };
-
-        const usuario = await adminDb.collection("usuarios").doc(dados.usuarioId).get();
-        return { id: documento.id, ...dados, usuarioNome: usuario.data()?.nome };
+        const solicitanteSnapshot = await adminDb.collection("usuarios").doc(dados.usuarioId).get();
+        const solicitante = solicitanteSnapshot.data();
+        if (
+          usuario?.perfil === "gestor" &&
+          (solicitante?.perfil !== "funcionario" || solicitante.setorId !== usuario.setorId)
+        ) return null;
+        return { id: documento.id, ...dados, usuarioNome: solicitante?.nome ?? dados.usuarioNome };
       }));
-    return NextResponse.json(solicitacoes);
+    return NextResponse.json(solicitacoes.filter((solicitacao) => solicitacao !== null));
   } catch (erro) {
     const mensagem = (erro as Error).message ?? "";
     if (mensagem.includes("restrita") || mensagem.includes("inativo") || mensagem.includes("não encontrado") || mensagem.includes("não verificado")) {
@@ -82,7 +85,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ id: solicitacao.id }, { status: 201 });
     }
 
-    const { uid } = await verificarTokenAdmin(idToken);
+    const { uid, usuario } = await verificarTokenGestorOuAdmin(idToken);
     if (!body.solicitacaoId || !["aprovada", "rejeitada"].includes(body.decisao ?? "")) {
       return NextResponse.json({ erro: "Solicitação ou decisão inválida." }, { status: 400 });
     }
@@ -93,6 +96,17 @@ export async function POST(request: NextRequest) {
       if (!solicitacaoSnapshot.exists) throw new Error("SOLICITACAO_NAO_ENCONTRADA");
       const solicitacao = solicitacaoSnapshot.data()!;
       if (solicitacao.status !== "pendente") throw new Error("SOLICITACAO_JA_PROCESSADA");
+
+      const solicitanteSnapshot = await transaction.get(
+        adminDb.collection("usuarios").doc(solicitacao.usuarioId)
+      );
+      const solicitante = solicitanteSnapshot.data();
+      if (
+        usuario?.perfil === "gestor" &&
+        (solicitante?.perfil !== "funcionario" || solicitante.setorId !== usuario.setorId)
+      ) {
+        throw new Error("CORRECAO_FORA_DO_SETOR");
+      }
 
       const agora = Timestamp.now();
       if (body.decisao === "aprovada") {
@@ -155,6 +169,9 @@ export async function POST(request: NextRequest) {
     }
     if (codigo === "REGISTRO_NAO_ENCONTRADO" || codigo === "REGISTRO_INVALIDO" || codigo === "HORARIO_INVALIDO") {
       return NextResponse.json({ erro: "Dados da correção inválidos." }, { status: 400 });
+    }
+    if (codigo === "CORRECAO_FORA_DO_SETOR") {
+      return NextResponse.json({ erro: "Acesso negado para esta solicitação." }, { status: 403 });
     }
     const mensagem = (erro as Error).message ?? "";
     if (mensagem.includes("restrita") || mensagem.includes("inativo") || mensagem.includes("não encontrado") || mensagem.includes("não verificado")) {

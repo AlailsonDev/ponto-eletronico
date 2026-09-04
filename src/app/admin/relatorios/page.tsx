@@ -171,5 +171,5 @@ function RelatoriosConteudo() {
 }
 
 export default function RelatoriosPage() {
-  return <ProtectedRoute perfisPermitidos={["admin"]}><RelatoriosConteudo /></ProtectedRoute>;
+  return <ProtectedRoute perfisPermitidos={["admin", "gestor"]}><RelatoriosConteudo /></ProtectedRoute>;
 }

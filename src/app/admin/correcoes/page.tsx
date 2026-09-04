@@ -58,4 +58,4 @@ function CorrecoesConteudo() {
   </main></div>;
 }
 
-export default function CorrecoesPage() { return <ProtectedRoute perfisPermitidos={["admin"]}><CorrecoesConteudo /></ProtectedRoute>; }
+export default function CorrecoesPage() { return <ProtectedRoute perfisPermitidos={["admin", "gestor"]}><CorrecoesConteudo /></ProtectedRoute>; }

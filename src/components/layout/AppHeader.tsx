@@ -10,8 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Usuario } from "@/types/usuario";
 
 // Todo perfil bate ponto próprio, então "Ponto" e "Histórico" aparecem para
-// todo mundo. Admin ganha "Funcionários" também. Gestor ganhará "Setor"
-// quando essa área for implementada.
+// todo mundo. Admin e gestor ganham as áreas de acompanhamento permitidas.
 const LINKS_BASE = [
   { href: "/dashboard", rotulo: "Ponto" },
   { href: "/historico", rotulo: "Histórico" },
@@ -28,6 +27,12 @@ const LINKS_ADMIN = [
   { href: "/admin/jornadas", rotulo: "Jornadas" },
 ];
 
+const LINKS_GESTOR = [
+  { href: "/admin/relatorios", rotulo: "Relatórios" },
+  { href: "/admin/correcoes", rotulo: "Correções" },
+  ...LINKS_BASE,
+];
+
 export function AppHeader({ usuario }: { usuario: Usuario }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -36,10 +41,10 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [solicitacoesPendentes, setSolicitacoesPendentes] = useState(0);
 
-  const links = usuario.perfil === "admin" ? LINKS_ADMIN : LINKS_BASE;
+  const links = usuario.perfil === "admin" ? LINKS_ADMIN : usuario.perfil === "gestor" ? LINKS_GESTOR : LINKS_BASE;
 
   useEffect(() => {
-    if (usuario.perfil !== "admin" || !firebaseUser) {
+    if ((usuario.perfil !== "admin" && usuario.perfil !== "gestor") || !firebaseUser) {
       setSolicitacoesPendentes(0);
       return;
     }

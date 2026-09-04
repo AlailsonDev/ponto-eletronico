@@ -149,6 +149,21 @@ export async function buscarTodosRegistrosPeriodo(
     .sort((a, b) => a.data.localeCompare(b.data));
 }
 
+export async function buscarRegistrosParaRelatorio(
+  dataInicio: string,
+  dataFim: string,
+  setorId?: string
+): Promise<RegistroPonto[]> {
+  const filtros = setorId
+    ? [where("setorId", "==", setorId)]
+    : [where("data", ">=", dataInicio), where("data", "<=", dataFim)];
+  const snapshot = await getDocs(query(collection(db, "registros_ponto"), ...filtros));
+  return snapshot.docs
+    .map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) } as RegistroPonto))
+    .filter((registro) => registro.data >= dataInicio && registro.data <= dataFim)
+    .sort((a, b) => a.data.localeCompare(b.data));
+}
+
 export async function criarSolicitacaoCorrecao(input: {
   registro: RegistroPonto;
   novoHorario: string;

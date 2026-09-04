@@ -47,7 +47,7 @@ export function BotaoRegistro({ proximoTipo, diaNaoTrabalhado, registrando, onRe
       <Button
         onClick={confirmarRegistro}
         carregando={registrando}
-        className="w-full py-6 text-base"
+        className="w-full border-2 border-transparent py-6 text-base"
       >
         {registrando ? "Registrando…" : rotuloBotaoParaTipo(proximoTipo)}
       </Button>

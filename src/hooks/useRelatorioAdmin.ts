@@ -1,12 +1,13 @@
 "use client";
 
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useMemo, useState } from "react";
 import type { Jornada } from "@/types/jornada";
 import type { RegistroPonto, ResumoJornadaDia } from "@/types/registroPonto";
 import type { Usuario } from "@/types/usuario";
-import { listarFuncionarios } from "@/services/usuarios.service";
+import { listarFuncionariosParaRelatorio } from "@/services/usuarios.service";
 import { listarJornadas } from "@/services/jornadas.service";
-import { buscarTodosRegistrosPeriodo } from "@/services/ponto.service";
+import { buscarRegistrosParaRelatorio } from "@/services/ponto.service";
 import { calcularResumoDia } from "@/lib/calculoJornada";
 import { limitesDoMes, mesAtualISO } from "@/lib/formatadores";
 
@@ -21,6 +22,7 @@ export interface LinhaRelatorio {
 }
 
 export function useRelatorioAdmin() {
+  const { perfil } = useAuth();
   const [anoMesSelecionado, setAnoMesSelecionado] = useState(mesAtualISO());
   const [funcionarios, setFuncionarios] = useState<Usuario[]>([]);
   const [jornadas, setJornadas] = useState<Jornada[]>([]);
@@ -34,10 +36,13 @@ export function useRelatorioAdmin() {
     setCarregando(true);
     setErro(null);
 
+    if (!perfil) return () => { cancelado = true; };
+
+    const setorId = perfil.perfil === "gestor" ? perfil.setorId : undefined;
     Promise.all([
-      listarFuncionarios(),
+      listarFuncionariosParaRelatorio(setorId),
       listarJornadas(),
-      buscarTodosRegistrosPeriodo(dataInicio, dataFim),
+      buscarRegistrosParaRelatorio(dataInicio, dataFim, setorId),
     ])
       .then(([funcionariosCarregados, jornadasCarregadas, registrosCarregados]) => {
         if (cancelado) return;
@@ -55,7 +60,7 @@ export function useRelatorioAdmin() {
     return () => {
       cancelado = true;
     };
-  }, [dataInicio, dataFim]);
+  }, [dataInicio, dataFim, perfil]);
 
   const jornadasPorId = useMemo(() => {
     const mapa = new Map<string, Jornada>();
