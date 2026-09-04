@@ -1,6 +1,15 @@
 export const RAIO_PADRAO_METROS = 100;
 export const PRECISAO_MAXIMA_METROS = 100;
 
+// coordenadas
+export const LOCAL_TRABALHO = {
+  id: "complexo-administrativo",
+  nome: "Complexo Administrativo",
+  latitude: -8.1509189,
+  longitude: -34.9231008,
+  raioMetros: 150,
+} as const;
+
 export type MetodoGeolocalizacao =
   | "GEOLOCATION"
   | "GEOLOCATION_FORA_DO_RAIO"

@@ -5,20 +5,16 @@ import { Check, Pencil, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { Setor } from "@/types/setor";
-import type { ConfiguracaoLocalSetor } from "@/services/setores.service";
 
 interface TabelaSetoresProps {
   setores: Setor[];
   onAlternarAtivo: (setor: Setor) => void;
-  onRenomear: (setor: Setor, dados: ConfiguracaoLocalSetor) => void;
+  onRenomear: (setor: Setor, novoNome: string) => void;
 }
 
 export function TabelaSetores({ setores, onAlternarAtivo, onRenomear }: TabelaSetoresProps) {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [nomeEmEdicao, setNomeEmEdicao] = useState("");
-  const [latitudeEmEdicao, setLatitudeEmEdicao] = useState("");
-  const [longitudeEmEdicao, setLongitudeEmEdicao] = useState("");
-  const [raioEmEdicao, setRaioEmEdicao] = useState("100");
 
   if (setores.length === 0) {
     return (
@@ -34,12 +30,7 @@ export function TabelaSetores({ setores, onAlternarAtivo, onRenomear }: TabelaSe
         {setores.map((setor) => (
           <li key={setor.id} className="flex items-center justify-between gap-3 px-4 py-3">
             {editandoId === setor.id ? (
-              <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-4">
-                <input autoFocus value={nomeEmEdicao} onChange={(e) => setNomeEmEdicao(e.target.value)} className="rounded-card border border-teal-500 px-2.5 py-1.5 font-body text-sm outline-none" aria-label="Nome do setor" />
-                <input type="number" step="any" value={latitudeEmEdicao} onChange={(e) => setLatitudeEmEdicao(e.target.value)} className="rounded-card border border-teal-500 px-2.5 py-1.5 font-body text-sm outline-none" aria-label="Latitude" placeholder="Latitude" />
-                <input type="number" step="any" value={longitudeEmEdicao} onChange={(e) => setLongitudeEmEdicao(e.target.value)} className="rounded-card border border-teal-500 px-2.5 py-1.5 font-body text-sm outline-none" aria-label="Longitude" placeholder="Longitude" />
-                <input type="number" min="1" value={raioEmEdicao} onChange={(e) => setRaioEmEdicao(e.target.value)} className="rounded-card border border-teal-500 px-2.5 py-1.5 font-body text-sm outline-none" aria-label="Raio permitido" placeholder="Raio (m)" />
-              </div>
+              <input autoFocus value={nomeEmEdicao} onChange={(e) => setNomeEmEdicao(e.target.value)} className="flex-1 rounded-card border border-teal-500 px-2.5 py-1.5 font-body text-sm outline-none" aria-label="Nome do setor" />
             ) : (
               <span className="font-body text-sm font-medium text-ink-900">{setor.nome}</span>
             )}
@@ -53,8 +44,7 @@ export function TabelaSetores({ setores, onAlternarAtivo, onRenomear }: TabelaSe
                 <>
                   <button
                     onClick={() => {
-                      const dados = { nome: nomeEmEdicao.trim(), ativo: setor.ativo, latitude: Number(latitudeEmEdicao), longitude: Number(longitudeEmEdicao), raioMetros: Number(raioEmEdicao) };
-                      if (dados.nome && Number.isFinite(dados.latitude) && Number.isFinite(dados.longitude) && dados.raioMetros > 0) onRenomear(setor, dados);
+                      if (nomeEmEdicao.trim()) onRenomear(setor, nomeEmEdicao.trim());
                       setEditandoId(null);
                     }}
                     aria-label="Confirmar"
@@ -75,9 +65,6 @@ export function TabelaSetores({ setores, onAlternarAtivo, onRenomear }: TabelaSe
                   onClick={() => {
                     setEditandoId(setor.id);
                     setNomeEmEdicao(setor.nome);
-                    setLatitudeEmEdicao(String(setor.latitude ?? ""));
-                    setLongitudeEmEdicao(String(setor.longitude ?? ""));
-                    setRaioEmEdicao(String(setor.raioMetros ?? 100));
                   }}
                   aria-label="Editar nome"
                   className="flex h-8 w-8 items-center justify-center rounded-card text-ink-400 hover:bg-surface"

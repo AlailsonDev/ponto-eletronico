@@ -20,7 +20,7 @@ function DashboardConteudo() {
   const { perfil } = useAuth();
   const retrospectiva = useRetrospectiva(perfil);
   const agora = useRelogio();
-  const { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro, setor, geolocalizacao } =
+  const { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro, localTrabalho, geolocalizacao } =
     usePontoHoje(perfil);
 
   if (!perfil) return null;
@@ -86,11 +86,11 @@ function DashboardConteudo() {
 
             <section className="rounded-card border border-surface-border bg-white p-4">
               <h2 className="font-display text-sm font-semibold text-ink-900">Validação de localização</h2>
-              {geolocalizacao.posicao && setor?.latitude !== undefined && setor.longitude !== undefined && (
+              {geolocalizacao.posicao && (
                 <MapaLocalizacao
                   usuario={{ latitude: geolocalizacao.posicao.latitude, longitude: geolocalizacao.posicao.longitude }}
-                  trabalho={{ latitude: setor.latitude, longitude: setor.longitude }}
-                  raioMetros={setor.raioMetros ?? 100}
+                  trabalho={{ latitude: localTrabalho.latitude, longitude: localTrabalho.longitude }}
+                  raioMetros={localTrabalho.raioMetros}
                   valida={geolocalizacao.valida}
                 />
               )}

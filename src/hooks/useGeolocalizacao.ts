@@ -2,11 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { coordenadasValidas, distanciaEmMetros, dispositivoMovel, PRECISAO_MAXIMA_METROS, RAIO_PADRAO_METROS } from "@/lib/geolocalizacao";
-import type { Setor } from "@/types/setor";
 
 export type StatusGeolocalizacao = "inicial" | "obtendo" | "valida" | "fora-do-raio" | "erro";
 
-export function useGeolocalizacao(setor: Setor | null) {
+interface LocalizacaoAutorizada {
+  latitude: number;
+  longitude: number;
+  raioMetros?: number;
+}
+
+export function useGeolocalizacao(setor: LocalizacaoAutorizada | null) {
   const obrigatoria = typeof navigator !== "undefined" && dispositivoMovel(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
   const [status, setStatus] = useState<StatusGeolocalizacao>("inicial");
   const [posicao, setPosicao] = useState<GeolocationCoordinates | null>(null);

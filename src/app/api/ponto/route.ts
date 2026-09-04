@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, userAgent } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb, verificarTokenAtivo } from "@/lib/firebase/admin";
-import { coordenadasValidas, dispositivoMovel, distanciaEmMetros, RAIO_PADRAO_METROS, PRECISAO_MAXIMA_METROS } from "@/lib/geolocalizacao";
+import { coordenadasValidas, dispositivoMovel, distanciaEmMetros, LOCAL_TRABALHO, PRECISAO_MAXIMA_METROS } from "@/lib/geolocalizacao";
 import type { TipoRegistro } from "@/types/registroPonto";
 
 const TIPOS: TipoRegistro[] = ["ENTRADA", "SAIDA_ALMOCO", "RETORNO_ALMOCO", "SAIDA"];
@@ -61,22 +61,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ erro: "A localização não tem precisão suficiente.", codigo: "PRECISAO_BAIXA" }, { status: 400 });
     }
 
-    let setor: { [campo: string]: unknown } | undefined;
     let distanciaMetros: number | undefined;
     let localizacaoValidada = false;
     let metodoGeolocalizacao: "GEOLOCATION" | "GEOLOCATION_FORA_DO_RAIO" | "GEOLOCATION_PRECISAO_BAIXA" | "NO_GEOLOCATION_DESKTOP" = "NO_GEOLOCATION_DESKTOP";
     if (informouLocalizacao) {
       metodoGeolocalizacao = "GEOLOCATION";
-      setor = dadosSetor;
-      const setorConfigurado = setorSnapshot.exists && dadosSetor?.ativo === true && Number.isFinite(dadosSetor.latitude) && Number.isFinite(dadosSetor.longitude) && coordenadasValidas({ latitude: dadosSetor.latitude, longitude: dadosSetor.longitude });
-      if (localizacaoObrigatoria && !setorConfigurado) {
-        return NextResponse.json({ erro: "O local de trabalho ainda não foi configurado.", codigo: "LOCAL_NAO_CONFIGURADO" }, { status: 400 });
-      }
-      if (setorConfigurado && dadosSetor) {
-        const raioMetros = Number.isFinite(dadosSetor.raioMetros) && dadosSetor.raioMetros > 0 ? Math.min(dadosSetor.raioMetros, 1_000) : RAIO_PADRAO_METROS;
+      {
+        const raioMetros = LOCAL_TRABALHO.raioMetros;
         distanciaMetros = distanciaEmMetros(
           { latitude: body.latitude!, longitude: body.longitude! },
-          { latitude: dadosSetor.latitude, longitude: dadosSetor.longitude }
+          { latitude: LOCAL_TRABALHO.latitude, longitude: LOCAL_TRABALHO.longitude }
         );
         if (localizacaoObrigatoria && distanciaMetros > raioMetros) {
           return NextResponse.json({ erro: `Você está fora da área permitida. Distância aproximada: ${Math.round(distanciaMetros)} metros.`, codigo: "FORA_DO_RAIO", distanciaMetros: Math.round(distanciaMetros) }, { status: 403 });
@@ -111,7 +105,7 @@ export async function POST(request: NextRequest) {
         dadosRegistro.longitude = body.longitude;
         dadosRegistro.precisaoMetros = body.precisaoMetros;
         if (distanciaMetros !== undefined) dadosRegistro.distanciaMetros = Math.round(distanciaMetros);
-        if (setor) dadosRegistro.localTrabalhoId = usuario?.setorId;
+        dadosRegistro.localTrabalhoId = LOCAL_TRABALHO.id;
         dadosRegistro.geolocalizacaoValidada = localizacaoValidada;
       }
       transaction.create(registroRef, dadosRegistro);

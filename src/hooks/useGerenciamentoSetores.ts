@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { Setor } from "@/types/setor";
-import { listarTodosSetores, criarSetor, atualizarSetor, type ConfiguracaoLocalSetor } from "@/services/setores.service";
+import { listarTodosSetores, criarSetor, atualizarSetor } from "@/services/setores.service";
 
 export function useGerenciamentoSetores() {
   const [setores, setSetores] = useState<Setor[]>([]);
@@ -26,11 +26,11 @@ export function useGerenciamentoSetores() {
     carregar();
   }, [carregar]);
 
-  async function criar(dados: ConfiguracaoLocalSetor) {
+  async function criar(nome: string) {
     setEnviando(true);
     setErro(null);
     try {
-      await criarSetor(dados);
+      await criarSetor(nome);
       await carregar();
     } catch {
       setErro("Não foi possível criar o setor.");
@@ -49,10 +49,10 @@ export function useGerenciamentoSetores() {
     }
   }
 
-  async function renomear(setor: Setor, dados: ConfiguracaoLocalSetor) {
+  async function renomear(setor: Setor, novoNome: string) {
     setErro(null);
     try {
-      await atualizarSetor(setor.id, dados);
+      await atualizarSetor(setor.id, { nome: novoNome });
       await carregar();
     } catch {
       setErro("Não foi possível renomear o setor.");

@@ -1,5 +1,4 @@
 import { addDoc, collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
-import { coordenadasValidas } from "@/lib/geolocalizacao";
 import { db } from "@/lib/firebase/config";
 import type { Setor } from "@/types/setor";
 
@@ -25,28 +24,17 @@ export async function listarTodosSetores(): Promise<Setor[]> {
  * do cadastro de funcionário): setores não envolvem o Firebase Auth, então
  * a Security Rule (souAdmin()) já é proteção suficiente por si só.
  */
-export async function criarSetor(dados: ConfiguracaoLocalSetor): Promise<void> {
-  if (!coordenadasValidas(dados) || dados.raioMetros <= 0 || dados.raioMetros > 1_000) throw new Error("CONFIGURACAO_LOCAL_INVALIDA");
+export async function criarSetor(nome: string): Promise<void> {
   await addDoc(collection(db, "setores"), {
-    ...dados,
+    nome,
+    ativo: true,
     gestoresIds: [],
   });
 }
 
-export interface ConfiguracaoLocalSetor {
-  nome: string;
-  ativo: boolean;
-  latitude: number;
-  longitude: number;
-  raioMetros: number;
-}
-
 export async function atualizarSetor(
   id: string,
-  dados: Partial<ConfiguracaoLocalSetor>
+  dados: { nome?: string; ativo?: boolean }
 ): Promise<void> {
-  if (dados.latitude !== undefined || dados.longitude !== undefined || dados.raioMetros !== undefined) {
-    if (!coordenadasValidas({ latitude: dados.latitude ?? NaN, longitude: dados.longitude ?? NaN }) || !dados.raioMetros || dados.raioMetros <= 0 || dados.raioMetros > 1_000) throw new Error("CONFIGURACAO_LOCAL_INVALIDA");
-  }
   await updateDoc(doc(db, "setores", id), { ...dados });
 }

@@ -9,7 +9,7 @@ import { buscarJornada } from "@/services/jornadas.service";
 import { calcularResumoDia } from "@/lib/calculoJornada";
 import { proximoTipoPermitido } from "@/lib/validacaoSequencia";
 import { dataHojeISO } from "@/lib/formatadores";
-import { buscarSetor } from "@/services/setores.service";
+import { LOCAL_TRABALHO } from "@/lib/geolocalizacao";
 import { useGeolocalizacao } from "@/hooks/useGeolocalizacao";
 
 export function usePontoHoje(usuario: Usuario | null) {
@@ -18,12 +18,11 @@ export function usePontoHoje(usuario: Usuario | null) {
   const [carregando, setCarregando] = useState(true);
   const [registrando, setRegistrando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [setor, setSetor] = useState<import("@/types/setor").Setor | null>(null);
 
   const hoje = dataHojeISO();
   const diaDaSemana = new Date(`${hoje}T12:00:00`).getDay();
   const diaNaoTrabalhado = !!jornada && !diasTrabalhoDaJornada(jornada).includes(diaDaSemana);
-  const geolocalizacao = useGeolocalizacao(setor);
+  const geolocalizacao = useGeolocalizacao(LOCAL_TRABALHO);
 
   // Listener único dos registros de hoje — dispara de novo só se o uid mudar.
   useEffect(() => {
@@ -52,11 +51,6 @@ export function usePontoHoje(usuario: Usuario | null) {
     if (!usuario?.jornadaId) return;
     buscarJornada(usuario.jornadaId).then(setJornada).catch(() => setJornada(null));
   }, [usuario?.jornadaId]);
-
-  useEffect(() => {
-    if (!usuario?.setorId) return;
-    buscarSetor(usuario.setorId).then(setSetor).catch(() => setSetor(null));
-  }, [usuario?.setorId]);
 
   const registrar = useCallback(async () => {
     if (!usuario) return;
@@ -89,5 +83,5 @@ export function usePontoHoje(usuario: Usuario | null) {
   const resumo = calcularResumoDia(hoje, registros, jornada);
   const proximoTipo = diaNaoTrabalhado ? null : proximoTipoPermitido(registros);
 
-  return { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro: () => setErro(null), setor, geolocalizacao };
+  return { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro: () => setErro(null), localTrabalho: LOCAL_TRABALHO, geolocalizacao };
 }
