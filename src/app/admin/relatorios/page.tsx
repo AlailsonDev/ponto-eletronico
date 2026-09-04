@@ -65,6 +65,9 @@ async function baixarExcel(linhas: LinhaRelatorio[], anoMes: string) {
     { header: "Total", key: "total", width: 14 },
     { header: "Atraso", key: "atraso", width: 14 },
     { header: "Hora extra", key: "extra", width: 16 },
+    { header: "Localização", key: "localizacao", width: 16 },
+    { header: "Distância (m)", key: "distancia", width: 16 },
+    { header: "Precisão (m)", key: "precisao", width: 16 },
     { header: "Status", key: "status", width: 16 },
   ];
   aplicarEstiloCabecalho(detalhamento.getRow(1));
@@ -82,10 +85,13 @@ async function baixarExcel(linhas: LinhaRelatorio[], anoMes: string) {
         atraso: formatarMinutos(dia.minutosAtraso),
         extra: formatarMinutos(dia.minutosHoraExtra),
         status: dia.incompleta ? "Incompleto" : "Normal",
+        localizacao: dia.entrada?.geolocalizacaoValidada ? "Validada" : "Não informada",
+        distancia: dia.entrada?.distanciaMetros ?? "-",
+        precisao: dia.entrada?.precisaoMetros ?? "-",
       });
     }
   }
-  detalhamento.autoFilter = { from: "A1", to: "K1" };
+  detalhamento.autoFilter = { from: "A1", to: "N1" };
   detalhamento.views = [{ state: "frozen", ySplit: 1 }];
 
   const buffer = await workbook.xlsx.writeBuffer();

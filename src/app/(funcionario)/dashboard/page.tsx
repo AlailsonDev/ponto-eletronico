@@ -12,12 +12,15 @@ import { ResumoJornadaCards } from "@/components/ponto/ResumoJornadaCards";
 import { saudacaoPorHorario } from "@/lib/formatadores";
 import { useRetrospectiva } from "@/hooks/useRetrospectiva";
 import { RetrospectivaModal } from "@/components/retrospectiva/RetrospectivaModal";
+import dynamic from "next/dynamic";
+
+const MapaLocalizacao = dynamic(() => import("@/components/ponto/MapaLocalizacao").then((modulo) => modulo.MapaLocalizacao), { ssr: false });
 
 function DashboardConteudo() {
   const { perfil } = useAuth();
   const retrospectiva = useRetrospectiva(perfil);
   const agora = useRelogio();
-  const { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro } =
+  const { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro, setor, geolocalizacao } =
     usePontoHoje(perfil);
 
   if (!perfil) return null;
@@ -81,10 +84,30 @@ function DashboardConteudo() {
           <div className="flex flex-col gap-6">
             <StatusJornada resumo={resumo} />
 
+            <section className="rounded-card border border-surface-border bg-white p-4">
+              <h2 className="font-display text-sm font-semibold text-ink-900">Validação de localização</h2>
+              {geolocalizacao.posicao && setor?.latitude !== undefined && setor.longitude !== undefined && (
+                <MapaLocalizacao
+                  usuario={{ latitude: geolocalizacao.posicao.latitude, longitude: geolocalizacao.posicao.longitude }}
+                  trabalho={{ latitude: setor.latitude, longitude: setor.longitude }}
+                  raioMetros={setor.raioMetros ?? 100}
+                  valida={geolocalizacao.valida}
+                />
+              )}
+              <p className="mt-3 font-body text-sm text-ink-700" role="status" aria-live="polite">
+                {geolocalizacao.status === "obtendo" && "Obtendo sua localização..."}
+                {geolocalizacao.valida && `✓ ${geolocalizacao.obrigatoria ? "Você está no local de trabalho" : "Localização disponível"}. Distância: ${Math.round(geolocalizacao.distancia ?? 0)} metros`}
+                {geolocalizacao.status === "fora-do-raio" && `${geolocalizacao.obrigatoria ? "⚠ Você está fora da área permitida" : "Localização disponível"}. Distância: ${Math.round(geolocalizacao.distancia ?? 0)} metros${!geolocalizacao.obrigatoria ? ". O registro continuará normalmente neste dispositivo." : ""}`}
+                {geolocalizacao.status === "erro" && (geolocalizacao.erro ?? (!geolocalizacao.obrigatoria && "Localização não disponível. O registro de ponto continuará normalmente neste dispositivo."))}
+              </p>
+              {geolocalizacao.obrigatoria && geolocalizacao.status !== "valida" && <button type="button" onClick={geolocalizacao.solicitar} className="mt-3 text-sm font-semibold text-navy-800 underline">Tentar novamente</button>}
+            </section>
+
             <BotaoRegistro
               proximoTipo={proximoTipo}
               diaNaoTrabalhado={diaNaoTrabalhado}
               registrando={registrando}
+              desabilitado={geolocalizacao.obrigatoria && !geolocalizacao.valida}
               onRegistrar={registrar}
             />
 

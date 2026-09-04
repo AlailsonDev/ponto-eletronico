@@ -38,7 +38,7 @@ function SetoresConteudo() {
         )}
 
         <section className="mb-6 rounded-card border border-surface-border bg-white p-5">
-          <FormularioSetor enviando={enviando} onSubmit={criar} />
+            <FormularioSetor enviando={enviando} onSubmit={criar} />
         </section>
 
         {carregando ? (

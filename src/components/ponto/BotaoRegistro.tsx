@@ -9,10 +9,11 @@ interface BotaoRegistroProps {
   proximoTipo: TipoRegistro | null;
   diaNaoTrabalhado?: boolean;
   registrando: boolean;
+  desabilitado?: boolean;
   onRegistrar: () => void;
 }
 
-export function BotaoRegistro({ proximoTipo, diaNaoTrabalhado, registrando, onRegistrar }: BotaoRegistroProps) {
+export function BotaoRegistro({ proximoTipo, diaNaoTrabalhado, registrando, desabilitado, onRegistrar }: BotaoRegistroProps) {
   const [confirmacaoAberta, setConfirmacaoAberta] = useState(false);
 
   function confirmarRegistro() {
@@ -47,6 +48,7 @@ export function BotaoRegistro({ proximoTipo, diaNaoTrabalhado, registrando, onRe
       <Button
         onClick={confirmarRegistro}
         carregando={registrando}
+        disabled={desabilitado}
         className="w-full border-2 border-transparent py-6 text-base"
       >
         {registrando ? "Registrando…" : rotuloBotaoParaTipo(proximoTipo)}

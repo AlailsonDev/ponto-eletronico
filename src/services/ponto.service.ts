@@ -1,7 +1,4 @@
 import {
-  doc,
-  setDoc,
-  serverTimestamp,
   onSnapshot,
   getDocs,
   query,
@@ -10,7 +7,7 @@ import {
   addDoc,
   type Unsubscribe,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase/config";
+import { db, auth } from "@/lib/firebase/config";
 import type {
   RegistroPonto,
   SolicitacaoCorrecao,
@@ -19,7 +16,6 @@ import type {
 import type { Usuario } from "@/types/usuario";
 
 /**
- * ID determinístico: {usuarioId}_{data}_{tipo}.
  * Isso é o que permite a Security Rule validar a sequência (ENTRADA antes de
  * SAIDA_ALMOCO, etc.) só com exists() em IDs previsíveis, sem precisar de
  * uma query por "último registro". Como bônus, tentar criar o mesmo tipo
@@ -27,16 +23,6 @@ import type { Usuario } from "@/types/usuario";
  * existente — e update é bloqueado pela regra, então duplicidade é
  * impossível mesmo sem checagem extra no client.
  */
-function idRegistro(usuarioId: string, data: string, tipo: TipoRegistro): string {
-  return `${usuarioId}_${data}_${tipo}`;
-}
-
-interface RegistrarPontoOpcoes {
-  observacao?: string;
-  latitude?: number;
-  longitude?: number;
-}
-
 const ERROS_AMIGAVEIS: Record<string, string> = {
   "permission-denied":
     "Não foi possível registrar. Verifique se este ponto já não foi batido hoje, ou se a sequência está correta.",
@@ -51,30 +37,21 @@ export async function registrarPonto(
   usuario: Usuario,
   data: string,
   tipo: TipoRegistro,
-  opcoes: RegistrarPontoOpcoes = {}
+  opcoes: { latitude?: number; longitude?: number; precisaoMetros?: number } = {}
 ): Promise<void> {
-  const id = idRegistro(usuario.uid, data, tipo);
-  const ref = doc(db, "registros_ponto", id);
-
-  // Campos undefined são omitidos (Firestore não aceita undefined) —
-  // por isso montamos o objeto condicionalmente em vez de espalhar opcoes.
-  const payload: Record<string, unknown> = {
-    usuarioId: usuario.uid,
-    setorId: usuario.setorId,
-    tipo,
-    data,
-    dataHora: serverTimestamp(),
-    origem: "web",
-    editadoPorCorrecao: false,
-  };
-  if (opcoes.observacao) payload.observacao = opcoes.observacao;
-  if (opcoes.latitude !== undefined) payload.latitude = opcoes.latitude;
-  if (opcoes.longitude !== undefined) payload.longitude = opcoes.longitude;
-
-  // IP não é capturado aqui: o navegador não tem acesso confiável ao IP
-  // público do dispositivo. Isso fica para uma API Route futura que recebe
-  // a requisição e lê o IP do cabeçalho no servidor (ver seção de riscos).
-  await setDoc(ref, payload);
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sua sessão expirou. Faça login novamente.");
+  const resposta = await fetch("/api/ponto", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
+    body: JSON.stringify({ data, tipo, ...opcoes }),
+  });
+  const dados = await resposta.json();
+  if (!resposta.ok) {
+    const erro = new Error(dados.erro ?? "Não foi possível registrar o ponto.") as Error & { code?: string };
+    erro.code = dados.codigo;
+    throw erro;
+  }
 }
 
 /**

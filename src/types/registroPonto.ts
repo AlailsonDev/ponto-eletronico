@@ -1,4 +1,5 @@
 import type { Timestamp } from "firebase/firestore";
+import type { MetodoGeolocalizacao } from "@/lib/geolocalizacao";
 
 export type TipoRegistro = "ENTRADA" | "SAIDA_ALMOCO" | "RETORNO_ALMOCO" | "SAIDA";
 
@@ -24,6 +25,11 @@ export interface RegistroPonto {
   observacao?: string;
   origem: "web" | "qrcode"; // "qrcode" preparado para uso futuro
   editadoPorCorrecao: boolean;
+  precisaoMetros?: number;
+  distanciaMetros?: number;
+  localTrabalhoId?: string;
+  geolocalizacaoValidada?: boolean;
+  metodoGeolocalizacao?: MetodoGeolocalizacao;
 }
 
 export type StatusSolicitacaoCorrecao = "pendente" | "aprovada" | "rejeitada";

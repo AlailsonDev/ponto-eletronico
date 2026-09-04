@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { Setor } from "@/types/setor";
-import { listarTodosSetores, criarSetor, atualizarSetor } from "@/services/setores.service";
+import { listarTodosSetores, criarSetor, atualizarSetor, type ConfiguracaoLocalSetor } from "@/services/setores.service";
 
 export function useGerenciamentoSetores() {
   const [setores, setSetores] = useState<Setor[]>([]);
@@ -26,11 +26,11 @@ export function useGerenciamentoSetores() {
     carregar();
   }, [carregar]);
 
-  async function criar(nome: string) {
+  async function criar(dados: ConfiguracaoLocalSetor) {
     setEnviando(true);
     setErro(null);
     try {
-      await criarSetor(nome);
+      await criarSetor(dados);
       await carregar();
     } catch {
       setErro("Não foi possível criar o setor.");
@@ -42,17 +42,17 @@ export function useGerenciamentoSetores() {
   async function alternarAtivo(setor: Setor) {
     setErro(null);
     try {
-      await atualizarSetor(setor.id, { nome: setor.nome, ativo: !setor.ativo });
+      await atualizarSetor(setor.id, { ativo: !setor.ativo });
       await carregar();
     } catch {
       setErro("Não foi possível atualizar o setor.");
     }
   }
 
-  async function renomear(setor: Setor, novoNome: string) {
+  async function renomear(setor: Setor, dados: ConfiguracaoLocalSetor) {
     setErro(null);
     try {
-      await atualizarSetor(setor.id, { nome: novoNome, ativo: setor.ativo });
+      await atualizarSetor(setor.id, dados);
       await carregar();
     } catch {
       setErro("Não foi possível renomear o setor.");

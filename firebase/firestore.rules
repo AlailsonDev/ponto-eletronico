@@ -109,22 +109,9 @@ service cloud.firestore {
         || souGestorDoSetor(resource.data.setorId)
         || souAdmin();
 
-      allow create: if souAtivo()
-        // só cria ponto para si mesmo — nunca em nome de outro usuário
-        && ehEuMesmo(request.resource.data.usuarioId)
-        // o setor gravado tem que bater com o setor atual do usuário
-        && request.resource.data.setorId == meuPerfil().setorId
-        // o ID do doc tem que corresponder exatamente aos campos enviados
-        // (impede mandar tipo=ENTRADA no corpo mas gravar em outro ID)
-        && registroId == idRegistroEsperado(
-             request.resource.data.usuarioId, request.resource.data.data, request.resource.data.tipo
-           )
-        // o timestamp tem que ser o do servidor, nunca um valor arbitrário
-        && request.resource.data.dataHora == request.time
-        // sequência correta: não dá pra bater SAÍDA sem ter batido RETORNO antes
-        && sequenciaValida(
-             request.resource.data.usuarioId, request.resource.data.data, request.resource.data.tipo
-           );
+      // A criação passa exclusivamente por /api/ponto, que valida a distância
+      // no servidor com o Admin SDK. O client só pode ler os registros.
+      allow create: if false;
 
       // Ponto é imutável para todo mundo, inclusive admin, direto pelo
       // client. Correção passa pelo fluxo de solicitacoes_correcao +
