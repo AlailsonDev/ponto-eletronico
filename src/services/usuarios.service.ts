@@ -39,14 +39,13 @@ export async function listarFuncionariosParaRelatorio(setorId?: string): Promise
   const consulta = setorId
     ? query(
         collection(db, "usuarios"),
-        where("perfil", "==", "funcionario"),
         where("setorId", "==", setorId)
       )
     : query(collection(db, "usuarios"), orderBy("nome"));
-  const funcionarios = (await getDocs(consulta)).docs
-    .map((d) => ({ uid: d.id, ...(d.data() as Omit<Usuario, "uid">) }))
-    .filter((usuario) => usuario.perfil === "funcionario");
-  return funcionarios.sort((a, b) => a.nome.localeCompare(b.nome));
+  const usuarios = (await getDocs(consulta)).docs
+    .map((d) => ({ uid: d.id, ...(d.data() as Omit<Usuario, "uid">) }));
+  return (setorId ? usuarios.filter((usuario) => usuario.perfil === "funcionario") : usuarios)
+    .sort((a, b) => a.nome.localeCompare(b.nome));
 }
 
 export async function desativarFuncionario(uid: string): Promise<void> {
