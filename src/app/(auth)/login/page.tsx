@@ -177,7 +177,7 @@ export default function LoginPage() {
       {/* Formulário */}
       <div className="flex min-h-screen flex-col items-center justify-center bg-surface p-6 md:p-12">
         <div className="w-full max-w-sm">
-          <div className="mb-12 flex items-center justify-start gap-3 sm:gap-5">
+          <div className="mb-12 flex items-center justify-start gap-1 sm:gap-1">
             <Image
               src={arvoreTecnologia}
               alt=""
