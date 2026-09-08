@@ -6,6 +6,7 @@ import { Eye, EyeOff, Clock3, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import logoCGM from "@/assets/CGM.png";
 import background from "@/assets/background.svg";
+import arvoreTecnologia from "@/assets/arvore-tecnologia.svg.png";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import {
@@ -176,6 +177,21 @@ export default function LoginPage() {
       {/* Formulário */}
       <div className="flex min-h-screen flex-col items-center justify-center bg-surface p-6 md:p-12">
         <div className="w-full max-w-sm">
+          <div className="mb-12 flex items-center justify-start gap-3 sm:gap-5">
+            <Image
+              src={arvoreTecnologia}
+              alt=""
+              aria-hidden="true"
+              className="h-20 w-20 object-contain sm:h-24 sm:w-24"
+              priority
+            />
+            <Image
+              src={logoCGM}
+              alt="Controladoria Geral do Município"
+              className="h-auto w-44 object-contain sm:w-52"
+              priority
+            />
+          </div>
           <h1 className="font-display text-2xl font-semibold text-ink-900">
             {modoRecuperacao ? "Recuperar senha" : "Entrar"}
           </h1>
@@ -300,12 +316,6 @@ export default function LoginPage() {
             </form>
           )}
         </div>
-        <Image
-          src={logoCGM}
-          alt="Controladoria Geral do Município"
-          className="mt-14 h-auto w-56 object-contain sm:w-64"
-          priority
-        />
       </div>
     </div>
   );
