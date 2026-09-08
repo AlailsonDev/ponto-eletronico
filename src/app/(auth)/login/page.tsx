@@ -170,7 +170,7 @@ export default function LoginPage() {
         </div>
 
         <p className="relative z-10 font-body text-xs text-white/40">
-          Acesso restrito aos servidores da Controladoria Geral do município do Jaboatão dos Guararapes.
+          Aplicação em fase experimental e de acesso restrito aos servidores da Controladoria Geral do município do Jaboatão dos Guararapes.
         </p>
       </div>
 
