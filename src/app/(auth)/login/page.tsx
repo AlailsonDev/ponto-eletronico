@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Clock3, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import logoCGM from "@/assets/CGM.png";
+import background from "@/assets/background.svg";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import {
@@ -127,14 +128,23 @@ export default function LoginPage() {
     <div className="grid min-h-screen font-body md:grid-cols-2">
       {/* Painel institucional */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-navy-900 p-12 text-white md:flex">
-        <div className="flex items-center gap-2">
+        <Image
+          src={background}
+          alt=""
+          fill
+          aria-hidden="true"
+          className="pointer-events-none object-cover opacity-90"
+          priority
+        />
+
+        <div className="relative z-10 flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-teal-500" />
           <span className="font-display text-sm font-semibold tracking-wide">
             SISTEMA DE PONTO ELETRÔNICO
           </span>
         </div>
 
-        <div>
+        <div className="relative z-10">
           <div className="flex items-center gap-2 text-navy-950/0">
             <Clock3 className="h-8 w-8 text-teal-500" />
           </div>
@@ -158,7 +168,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <p className="font-body text-xs text-white/40">
+        <p className="relative z-10 font-body text-xs text-white/40">
           Acesso restrito aos servidores da Controladoria Geral do município do Jaboatão dos Guararapes.
         </p>
       </div>
