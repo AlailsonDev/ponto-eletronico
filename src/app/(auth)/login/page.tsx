@@ -147,7 +147,7 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-2 text-navy-950/0">
-            <Clock3 className="h-8 w-8 text-teal-500" />
+            <Clock3 className="h-8 w-8 text-white" />
           </div>
           <p
             className="font-mono text-6xl font-light tabular-nums text-white"
