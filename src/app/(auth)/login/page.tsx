@@ -177,7 +177,7 @@ export default function LoginPage() {
       {/* Formulário */}
       <div className="flex min-h-screen flex-col items-center justify-center bg-surface p-6 md:p-12">
         <div className="w-full max-w-sm">
-          <div className="mb-12 flex items-center justify-start gap-1 sm:gap-1">
+          {/* <div className="mb-12 flex items-center justify-start gap-1 sm:gap-1">
             <Image
               src={arvoreTecnologia}
               alt=""
@@ -191,7 +191,23 @@ export default function LoginPage() {
               className="h-auto w-44 object-contain sm:w-52"
               priority
             />
-          </div>
+          </div> */}
+          <div className="mb-12 flex items-center justify-start gap-1">
+  <Image
+    src={arvoreTecnologia}
+    alt=""
+    aria-hidden="true"
+    className="h-24 w-24 object-contain"
+    priority
+  />
+
+  <Image
+    src={logoCGM}
+    alt="Controladoria Geral do Município"
+    className="h-auto w-52 object-contain"
+    priority
+  />
+</div>
           <h1 className="font-display text-2xl font-semibold text-ink-900">
             {modoRecuperacao ? "Recuperar senha" : "Entrar"}
           </h1>
