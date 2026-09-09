@@ -31,7 +31,7 @@ function DashboardConteudo() {
     <div className="min-h-screen bg-surface">
       <AppHeader usuario={retrospectiva.retrospectiva ? { ...perfil, insigniaAtual: retrospectiva.retrospectiva.insignia } : perfil} />
 
-      <main className="mx-auto max-w-2xl px-4 py-8">
+      <main className="mx-auto max-w-2xl rounded-card bg-white/80 px-4 py-8 shadow-card">
         <div className="mb-6 flex items-end justify-between">
           <div>
             <h1 className="font-display text-2xl font-semibold text-ink-900">
