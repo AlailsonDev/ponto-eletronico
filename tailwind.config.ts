@@ -51,7 +51,7 @@ const config: Config = {
         card: "12px",
       },
       boxShadow: {
-        card: "0 1px 2px rgba(23, 57, 166, 0.04), 0 1px 6px rgba(23, 57, 166, 0.08)",
+        card: "0 8px 24px rgba(23, 57, 166, 0.12), 0 2px 8px rgba(23, 57, 166, 0.08)",
       },
     },
   },

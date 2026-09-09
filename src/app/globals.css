@@ -23,6 +23,12 @@ body {
   background: #f5f8ff;
 }
 
+@layer components {
+  .rounded-card {
+    box-shadow: 0 8px 24px rgba(23, 57, 166, 0.12), 0 2px 8px rgba(23, 57, 166, 0.08);
+  }
+}
+
 html[data-high-contrast="true"] body {
   background: #000000 !important;
   color: #ffffff !important;

@@ -84,7 +84,7 @@ function DashboardConteudo() {
           <div className="flex flex-col gap-6">
             <StatusJornada resumo={resumo} />
 
-            <section className="rounded-card border border-surface-border bg-white p-4">
+            <section className="rounded-card border border-surface-border bg-white p-4 shadow-sm">
               <h2 className="font-display text-sm font-semibold text-ink-900">Validação de localização</h2>
               {geolocalizacao.posicao && (
                 <MapaLocalizacao

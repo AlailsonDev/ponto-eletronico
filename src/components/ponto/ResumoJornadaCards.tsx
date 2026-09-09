@@ -26,7 +26,7 @@ export function ResumoJornadaCards({ resumo }: { resumo: ResumoJornadaDia }) {
         <div
           key={item.rotulo}
           className={clsx(
-            "rounded-card border p-4",
+            "rounded-card border p-4 shadow-sm",
             item.destaque && item.cor === "amber" && "border-amber-600/20 bg-amber-100",
             item.destaque && item.cor === "teal" && "border-teal-500/20 bg-teal-100",
             !item.destaque && "border-surface-border bg-white"

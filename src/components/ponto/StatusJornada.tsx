@@ -21,7 +21,7 @@ export function StatusJornada({ resumo }: { resumo: ResumoJornadaDia }) {
           <div
             key={chave}
             className={clsx(
-              "flex flex-col items-center gap-2 rounded-card border p-4 text-center",
+              "flex flex-col items-center gap-2 rounded-card border p-4 text-center shadow-sm",
               feito ? "border-teal-500/30 bg-teal-100" : "border-surface-border bg-white"
             )}
           >
