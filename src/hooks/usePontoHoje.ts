@@ -9,7 +9,7 @@ import { buscarJornada } from "@/services/jornadas.service";
 import { calcularResumoDia } from "@/lib/calculoJornada";
 import { proximoTipoPermitido } from "@/lib/validacaoSequencia";
 import { dataHojeISO } from "@/lib/formatadores";
-import { LOCAL_TRABALHO } from "@/lib/geolocalizacao";
+import { localTrabalhoDoUsuario } from "@/lib/geolocalizacao";
 import { useGeolocalizacao } from "@/hooks/useGeolocalizacao";
 
 export function usePontoHoje(usuario: Usuario | null) {
@@ -22,7 +22,8 @@ export function usePontoHoje(usuario: Usuario | null) {
   const hoje = dataHojeISO();
   const diaDaSemana = new Date(`${hoje}T12:00:00`).getDay();
   const diaNaoTrabalhado = !!jornada && !diasTrabalhoDaJornada(jornada).includes(diaDaSemana);
-  const geolocalizacao = useGeolocalizacao(LOCAL_TRABALHO);
+  const localTrabalho = localTrabalhoDoUsuario(usuario?.ouvidoria);
+  const geolocalizacao = useGeolocalizacao(localTrabalho);
 
   // Listener único dos registros de hoje — dispara de novo só se o uid mudar.
   useEffect(() => {
@@ -83,5 +84,5 @@ export function usePontoHoje(usuario: Usuario | null) {
   const resumo = calcularResumoDia(hoje, registros, jornada);
   const proximoTipo = diaNaoTrabalhado ? null : proximoTipoPermitido(registros);
 
-  return { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro: () => setErro(null), localTrabalho: LOCAL_TRABALHO, geolocalizacao };
+  return { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro: () => setErro(null), localTrabalho, geolocalizacao };
 }

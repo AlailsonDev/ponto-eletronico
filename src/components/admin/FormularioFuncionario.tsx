@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
 import { gerarSenhaProvisoria } from "@/lib/senhaProvisoria";
 import type { Setor } from "@/types/setor";
@@ -29,6 +30,7 @@ const VALOR_INICIAL: NovoUsuarioInput = {
   jornadaId: "",
   dataAdmissao: new Date().toISOString().slice(0, 10),
   senhaProvisoria: "",
+  ouvidoria: false,
 };
 
 function formatarDataAdmissao(valor: unknown): string {
@@ -71,6 +73,7 @@ export function FormularioFuncionario({
       jornadaId: funcionario.jornadaId,
       dataAdmissao: formatarDataAdmissao(funcionario.dataAdmissao),
       senhaProvisoria: "",
+      ouvidoria: !!funcionario.ouvidoria,
     });
   }, [funcionario]);
 
@@ -159,6 +162,15 @@ export function FormularioFuncionario({
         value={form.dataAdmissao}
         onChange={(e) => atualizar("dataAdmissao", e.target.value)}
       />
+
+      <div className="flex items-center sm:col-span-2">
+        <Checkbox
+          label="Ouvidoria"
+          descricao="Marque se este funcionário trabalha no prédio da Ouvidoria — o registro de ponto passará a validar a localização desse local em vez do local principal."
+          checked={!!form.ouvidoria}
+          onChange={(e) => atualizar("ouvidoria", e.target.checked)}
+        />
+      </div>
 
       <div className="sm:col-span-2">
         <div className="flex items-end gap-2">

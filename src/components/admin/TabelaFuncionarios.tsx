@@ -52,7 +52,12 @@ export function TabelaFuncionarios({
                 <p className="text-xs text-ink-400">{f.email}</p>
               </td>
               <td className="px-4 py-3 text-ink-600">{f.matricula}</td>
-              <td className="px-4 py-3 text-ink-600">{nomeDoSetor(f.setorId)}</td>
+              <td className="px-4 py-3 text-ink-600">
+                <div className="flex items-center gap-1.5">
+                  {nomeDoSetor(f.setorId)}
+                  {f.ouvidoria && <Badge cor="neutral">Ouvidoria</Badge>}
+                </div>
+              </td>
               <td className="px-4 py-3 text-ink-600">{RÓTULO_PERFIL[f.perfil]}</td>
               <td className="px-4 py-3">
                 <Badge cor={f.status === "ativo" ? "green" : "neutral"}>

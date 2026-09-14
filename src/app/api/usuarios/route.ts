@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
           setorId: body.setorId,
           perfil: body.perfil,
           jornadaId: body.jornadaId,
+          ouvidoria: !!body.ouvidoria,
           status: "ativo",
           dataAdmissao: new Date(body.dataAdmissao),
           criadoEm: agora,

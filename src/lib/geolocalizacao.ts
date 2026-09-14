@@ -10,6 +10,25 @@ export const LOCAL_TRABALHO = {
   raioMetros: 150,
 } as const;
 
+// Local de trabalho alternativo para funcionários vinculados à Ouvidoria
+// (usuario.ouvidoria === true). Mesmo raio padrão do local principal.
+export const LOCAL_OUVIDORIA = {
+  id: "ouvidoria",
+  nome: "Ouvidoria",
+  latitude: -8.164569,
+  longitude: -34.922229,
+  raioMetros: LOCAL_TRABALHO.raioMetros,
+} as const;
+
+/**
+ * Escolhe o local de trabalho permitido para o funcionário: a Ouvidoria,
+ * quando ele estiver vinculado a ela, ou o local principal caso contrário
+ * (inclui funcionários antigos sem o campo `ouvidoria` no documento).
+ */
+export function localTrabalhoDoUsuario(ouvidoria?: boolean) {
+  return ouvidoria ? LOCAL_OUVIDORIA : LOCAL_TRABALHO;
+}
+
 export type MetodoGeolocalizacao =
   | "GEOLOCATION"
   | "GEOLOCATION_FORA_DO_RAIO"

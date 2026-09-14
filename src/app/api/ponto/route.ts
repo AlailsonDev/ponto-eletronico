@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, userAgent } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb, verificarTokenAtivo } from "@/lib/firebase/admin";
-import { coordenadasValidas, dispositivoMovel, distanciaEmMetros, LOCAL_TRABALHO, PRECISAO_MAXIMA_METROS } from "@/lib/geolocalizacao";
+import { coordenadasValidas, dispositivoMovel, distanciaEmMetros, localTrabalhoDoUsuario, PRECISAO_MAXIMA_METROS } from "@/lib/geolocalizacao";
 import type { TipoRegistro } from "@/types/registroPonto";
 
 const TIPOS: TipoRegistro[] = ["ENTRADA", "SAIDA_ALMOCO", "RETORNO_ALMOCO", "SAIDA"];
@@ -61,16 +61,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ erro: "A localização não tem precisão suficiente.", codigo: "PRECISAO_BAIXA" }, { status: 400 });
     }
 
+    const localTrabalho = localTrabalhoDoUsuario(usuario?.ouvidoria);
+
     let distanciaMetros: number | undefined;
     let localizacaoValidada = false;
     let metodoGeolocalizacao: "GEOLOCATION" | "GEOLOCATION_FORA_DO_RAIO" | "GEOLOCATION_PRECISAO_BAIXA" | "NO_GEOLOCATION_DESKTOP" = "NO_GEOLOCATION_DESKTOP";
     if (informouLocalizacao) {
       metodoGeolocalizacao = "GEOLOCATION";
       {
-        const raioMetros = LOCAL_TRABALHO.raioMetros;
+        const raioMetros = localTrabalho.raioMetros;
         distanciaMetros = distanciaEmMetros(
           { latitude: body.latitude!, longitude: body.longitude! },
-          { latitude: LOCAL_TRABALHO.latitude, longitude: LOCAL_TRABALHO.longitude }
+          { latitude: localTrabalho.latitude, longitude: localTrabalho.longitude }
         );
         if (localizacaoObrigatoria && distanciaMetros > raioMetros) {
           return NextResponse.json({ erro: `Você está fora da área permitida. Distância aproximada: ${Math.round(distanciaMetros)} metros.`, codigo: "FORA_DO_RAIO", distanciaMetros: Math.round(distanciaMetros) }, { status: 403 });
@@ -105,7 +107,7 @@ export async function POST(request: NextRequest) {
         dadosRegistro.longitude = body.longitude;
         dadosRegistro.precisaoMetros = body.precisaoMetros;
         if (distanciaMetros !== undefined) dadosRegistro.distanciaMetros = Math.round(distanciaMetros);
-        dadosRegistro.localTrabalhoId = LOCAL_TRABALHO.id;
+        dadosRegistro.localTrabalhoId = localTrabalho.id;
         dadosRegistro.geolocalizacaoValidada = localizacaoValidada;
       }
       transaction.create(registroRef, dadosRegistro);

@@ -43,6 +43,7 @@ export async function PATCH(
         perfil: body.perfil,
         jornadaId: body.jornadaId,
         dataAdmissao: new Date(body.dataAdmissao),
+        ouvidoria: !!body.ouvidoria,
         atualizadoEm: FieldValue.serverTimestamp(),
       });
       return NextResponse.json({ uid: params.uid, status: usuario.status });

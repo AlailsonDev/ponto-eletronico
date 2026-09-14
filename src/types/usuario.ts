@@ -20,6 +20,10 @@ export interface Usuario {
   atualizadoEm: Timestamp;
   insigniaAtual?: InsigniaRegularidade;
   insigniaPeriodo?: string;
+  // true quando o funcionário trabalha no prédio da Ouvidoria — o registro de
+  // ponto passa a validar a localização contra LOCAL_OUVIDORIA em vez do
+  // local principal. Ausente (undefined) em documentos antigos == false.
+  ouvidoria?: boolean;
 }
 
 // Formato usado no formulário de cadastro (antes de virar documento do Firestore)
@@ -34,6 +38,7 @@ export interface NovoUsuarioInput {
   jornadaId: string;
   dataAdmissao: string; // ISO date do form
   senhaProvisoria: string;
+  ouvidoria?: boolean;
 }
 
 export type EditarUsuarioInput = Omit<NovoUsuarioInput, "senhaProvisoria">;
