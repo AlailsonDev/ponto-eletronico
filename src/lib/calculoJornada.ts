@@ -1,6 +1,6 @@
 import type { Jornada } from "@/types/jornada";
 import type { RegistroPonto, ResumoJornadaDia } from "@/types/registroPonto";
-import { horarioParaMinutos, timestampParaMinutosDoDia } from "@/lib/formatadores";
+import { dataHojeISO, horarioParaMinutos, timestampParaMinutosDoDia } from "@/lib/formatadores";
 
 /**
  * Monta o resumo do dia a partir dos registros brutos + a jornada configurada
@@ -70,7 +70,10 @@ export function calcularResumoDia(
   }
 
   // Jornada incompleta: dia já passou (não é hoje) e falta algum dos 4 marcos.
-  const ehDataPassada = data < new Date().toISOString().slice(0, 10);
+  // Comparação em data local (não UTC) — a versão anterior usava
+  // toISOString(), que na virada da noite em UTC-3 já aponta pro dia
+  // seguinte e marcava o próprio dia de hoje como "passado" prematuramente.
+  const ehDataPassada = data < dataHojeISO();
   resumo.incompleta = ehDataPassada && !(entrada && saidaAlmoco && retornoAlmoco && saida);
 
   return resumo;

@@ -10,15 +10,15 @@ import { StatusJornada } from "@/components/ponto/StatusJornada";
 import { BotaoRegistro } from "@/components/ponto/BotaoRegistro";
 import { ResumoJornadaCards } from "@/components/ponto/ResumoJornadaCards";
 import { saudacaoPorHorario } from "@/lib/formatadores";
+import { useRetrospectiva } from "@/hooks/useRetrospectiva";
+import { RetrospectivaModal } from "@/components/retrospectiva/RetrospectivaModal";
 import dynamic from "next/dynamic";
 
-// Retrospectiva (insígnias de regularidade) foi desativada temporariamente
-// até uma revisão da funcionalidade — ver histórico do projeto. O código do
-// hook/serviço/API permanece intacto para retomada futura.
 const MapaLocalizacao = dynamic(() => import("@/components/ponto/MapaLocalizacao").then((modulo) => modulo.MapaLocalizacao), { ssr: false });
 
 function DashboardConteudo() {
   const { perfil } = useAuth();
+  const retrospectiva = useRetrospectiva(perfil);
   const agora = useRelogio();
   const { resumo, proximoTipo, diaNaoTrabalhado, registrar, registrando, carregando, erro, limparErro, localTrabalho, geolocalizacao } =
     usePontoHoje(perfil);
@@ -29,13 +29,21 @@ function DashboardConteudo() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <AppHeader usuario={perfil} />
+      <AppHeader usuario={retrospectiva.retrospectiva ? { ...perfil, insigniaAtual: retrospectiva.retrospectiva.insignia } : perfil} />
 
       <main className="mx-auto max-w-2xl rounded-card bg-white/80 px-4 py-8 shadow-card">
         <div className="mb-6 flex items-end justify-between">
           <div>
             <h1 className="font-display text-2xl font-semibold text-ink-900">
-              {saudacaoPorHorario()}, {primeiroNome}!
+              {saudacaoPorHorario()}, {primeiroNome}!{" "}
+              {retrospectiva.retrospectiva && (
+                <span
+                  title={`Insígnia ${retrospectiva.retrospectiva.insignia.name} no período ${retrospectiva.retrospectiva.periodo}`}
+                  aria-label={`Insígnia ${retrospectiva.retrospectiva.insignia.name}, período ${retrospectiva.retrospectiva.periodo}`}
+                >
+                  {retrospectiva.retrospectiva.insignia.emoji}
+                </span>
+              )}
             </h1>
             <p className="font-body text-sm text-ink-600">
               {agora
@@ -47,6 +55,15 @@ function DashboardConteudo() {
                 : ""}
             </p>
           </div>
+          {retrospectiva.retrospectiva && (
+            <button
+              type="button"
+              onClick={retrospectiva.abrir}
+              className="font-body text-xs font-semibold text-navy-800 underline underline-offset-4 hover:text-teal-600"
+            >
+              Minha retrospectiva
+            </button>
+          )}
           <p className="font-mono text-2xl tabular-nums text-navy-800" aria-live="polite">
             {agora
               ? agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
@@ -111,6 +128,7 @@ function DashboardConteudo() {
           </div>
         )}
       </main>
+      {retrospectiva.retrospectiva && <RetrospectivaModal retrospectiva={retrospectiva.retrospectiva} aberto={retrospectiva.aberta} onFechar={retrospectiva.fechar} />}
     </div>
   );
 }

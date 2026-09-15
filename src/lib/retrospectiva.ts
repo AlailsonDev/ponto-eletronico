@@ -7,18 +7,22 @@ import { limitesDoMes } from "@/lib/formatadores";
 
 export const REGULARIDADE_PESOS = { pontualidade: 0.4, jornada: 0.4, ocorrencias: 0.2 } as const;
 
+/**
+ * Dia do mês (fuso America/Recife) a partir do qual a retrospectiva do mês
+ * anterior passa a ficar disponível. O período analisado é sempre o mês
+ * civil anterior (já totalmente encerrado), então esse valor só controla
+ * a partir de quando o card aparece — nunca corre o risco de fechar um mês
+ * pela metade. Fixado em 15 para teste; ajuste quando definir a regra final
+ * (ex.: 1, para liberar logo no início do mês seguinte).
+ */
+export const DIA_EXIBICAO_RETROSPECTIVA = 15;
+
 export const FAIXAS_INSIGNIAS: Array<InsigniaRegularidade & { level: NivelInsignia }> = [
   { level: "diamante", score: 0, name: "Diamante", emoji: "💎", faixaMinima: 98, description: "Regularidade extraordinária!" },
   { level: "ouro", score: 0, name: "Ouro", emoji: "🥇", faixaMinima: 90, description: "Excelente regularidade!" },
   { level: "prata", score: 0, name: "Prata", emoji: "🥈", faixaMinima: 75, description: "Uma jornada bem consistente." },
   { level: "bronze", score: 0, name: "Bronze", emoji: "🥉", faixaMinima: 0, description: "Cada jornada conta. Vamos em frente!" },
 ];
-
-export function ultimoDiaUtilDoMes(ano: number, mes: number, feriados: Set<string>): string {
-  const data = new Date(ano, mes, 0, 12);
-  while (data.getDay() === 0 || data.getDay() === 6 || feriados.has(formatarISO(data))) data.setDate(data.getDate() - 1);
-  return formatarISO(data);
-}
 
 export function getRegularityBadge(score: number): InsigniaRegularidade {
   const pontuacao = Math.max(0, Math.min(100, Math.round(score)));
@@ -50,12 +54,20 @@ export function calcularRetrospectiva(periodo: string, registros: RegistroPonto[
   }
   const divisor = dias.length || 1;
   const diasTrabalhados = dias.filter((dia) => dia.entrada && dia.saida && (dia.minutosTrabalhados ?? 0) > 0).length;
-  const diasPontuais = dias.filter((dia) => !!dia.entrada && (dia.minutosAtraso ?? 0) === 0).length;
-  const diasJornadaCumprida = dias.filter((dia) => (dia.minutosTrabalhados ?? 0) >= (jornada?.cargaHorariaDiariaMinutos ?? 0)).length;
+  // Pontualidade e cumprimento de jornada só fazem sentido com uma jornada
+  // configurada — sem ela, `minutosAtraso` nunca é calculado (ver
+  // calcularResumoDia) e `cargaHorariaDiariaMinutos` não existe. Tratar a
+  // ausência de jornada como "0 dias pontuais/cumpridos" evita inflar a nota
+  // artificialmente para funcionários mal configurados.
+  const diasPontuais = jornada ? dias.filter((dia) => !!dia.entrada && (dia.minutosAtraso ?? 0) === 0).length : 0;
+  const diasJornadaCumprida = jornada ? dias.filter((dia) => (dia.minutosTrabalhados ?? 0) >= jornada.cargaHorariaDiariaMinutos).length : 0;
   const diasComAjuste = dias.filter((dia) => [dia.entrada, dia.saidaAlmoco, dia.retornoAlmoco, dia.saida].some((registro) => registro?.editadoPorCorrecao)).length;
   const minutosTrabalhados = dias.reduce((total, dia) => total + (dia.minutosTrabalhados ?? 0), 0);
   const minutosAtraso = dias.reduce((total, dia) => total + (dia.minutosAtraso ?? 0), 0);
-  const regularidade = dias.length === 0 ? 100 : Math.round(((diasPontuais / divisor) * REGULARIDADE_PESOS.pontualidade + (diasJornadaCumprida / divisor) * REGULARIDADE_PESOS.jornada + (dias.filter((dia) => !dia.incompleta).length / divisor) * REGULARIDADE_PESOS.ocorrencias) * 100);
+  // Sem dias previstos no período (jornada sem dias de trabalho, ou mês
+  // inteiro em feriados) não há base nenhuma para avaliar regularidade — 0
+  // em vez de 100, para não premiar quem não teve nenhum dia a cumprir.
+  const regularidade = dias.length === 0 ? 0 : Math.round(((diasPontuais / divisor) * REGULARIDADE_PESOS.pontualidade + (diasJornadaCumprida / divisor) * REGULARIDADE_PESOS.jornada + (dias.filter((dia) => !dia.incompleta).length / divisor) * REGULARIDADE_PESOS.ocorrencias) * 100);
   return { diasPrevistos: dias.length, diasTrabalhados, diasPontuais, diasJornadaCumprida, diasComAjuste, minutosTrabalhados, minutosAtraso, regularidade, dias };
 }
 

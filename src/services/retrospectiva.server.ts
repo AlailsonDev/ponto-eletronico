@@ -1,15 +1,21 @@
 import { adminDb } from "@/lib/firebase/admin";
 import type { Jornada } from "@/types/jornada";
 import type { RegistroPonto } from "@/types/registroPonto";
-import { calcularRetrospectiva, getRegularityBadge, ultimoDiaUtilDoMes } from "@/lib/retrospectiva";
+import { calcularRetrospectiva, DIA_EXIBICAO_RETROSPECTIVA, getRegularityBadge } from "@/lib/retrospectiva";
 import { limitesDoMes } from "@/lib/formatadores";
 
-export async function periodoDisponivelHoje(): Promise<string | null> {
+/**
+ * Período (mês civil) cuja retrospectiva deve ser exibida hoje, ou null se
+ * ainda não é hora. Sempre aponta para o mês anterior ao atual — já
+ * totalmente encerrado, então o cálculo nunca pega um dia pela metade —, e
+ * só passa a valer a partir do dia DIA_EXIBICAO_RETROSPECTIVA do mês
+ * corrente (ex.: retrospectiva de agosto liberada a partir de 15/09).
+ */
+export async function periodoParaExibicaoHoje(): Promise<string | null> {
   const agora = dataNoFusoLocal();
-  const periodoAtual = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`;
-  const feriados = await listarFeriados(periodoAtual);
-  const ultimoDia = ultimoDiaUtilDoMes(agora.getFullYear(), agora.getMonth() + 1, feriados);
-  return formatarData(agora) === ultimoDia ? periodoAtual : null;
+  if (agora.getDate() < DIA_EXIBICAO_RETROSPECTIVA) return null;
+  const mesAnterior = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
+  return `${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth() + 1).padStart(2, "0")}`;
 }
 
 export async function construirRetrospectiva(uid: string, usuario: FirebaseFirestore.DocumentData | undefined, periodo: string) {
@@ -22,7 +28,11 @@ export async function construirRetrospectiva(uid: string, usuario: FirebaseFires
   const registros = snapshot.docs
     .map((documento) => ({ id: documento.id, ...documento.data() } as unknown as RegistroPonto))
     .filter((registro) => registro.data >= inicio && registro.data <= fim);
-  const dados = calcularRetrospectiva(periodo, registros, jornada, feriados);
+  // `dias` é o detalhamento diário usado só para calcular os agregados
+  // abaixo — não faz parte do tipo Retrospectiva e não pode ser persistido
+  // como está: cada dia sem registro tem `entrada`/`saida` undefined, e o
+  // Firestore rejeita `undefined` em escritas (quebraria a transação).
+  const { dias: _dias, ...dados } = calcularRetrospectiva(periodo, registros, jornada, feriados);
   return { periodo, dataInicio: inicio, dataFim: fim, ...dados, insignia: getRegularityBadge(dados.regularidade) };
 }
 
@@ -33,8 +43,4 @@ async function listarFeriados(periodo: string): Promise<Set<string>> {
 
 function dataNoFusoLocal(): Date {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Recife" }));
-}
-
-function formatarData(data: Date): string {
-  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-${String(data.getDate()).padStart(2, "0")}`;
 }

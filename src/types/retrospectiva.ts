@@ -1,6 +1,12 @@
-import type { Timestamp } from "firebase/firestore";
-
 export type NivelInsignia = "bronze" | "prata" | "ouro" | "diamante";
+
+// Timestamps do Admin SDK, depois de passarem por NextResponse.json(), viram
+// objeto plano (não uma instância de Timestamp com .toDate()) — por isso não
+// usamos o tipo Timestamp do client SDK aqui.
+export interface TimestampSerializado {
+  _seconds: number;
+  _nanoseconds: number;
+}
 
 export interface InsigniaRegularidade {
   level: NivelInsignia;
@@ -26,6 +32,6 @@ export interface Retrospectiva {
   minutosAtraso: number;
   regularidade: number;
   insignia: InsigniaRegularidade;
-  visualizadaEm?: Timestamp | null;
-  criadaEm?: Timestamp | null;
+  visualizadaEm?: TimestampSerializado | null;
+  criadaEm?: TimestampSerializado | null;
 }
