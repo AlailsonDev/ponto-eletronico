@@ -8,14 +8,14 @@ import { limitesDoMes } from "@/lib/formatadores";
 export const REGULARIDADE_PESOS = { pontualidade: 0.4, jornada: 0.4, ocorrencias: 0.2 } as const;
 
 /**
- * Dia do mês (fuso America/Recife) a partir do qual a retrospectiva do mês
- * anterior passa a ficar disponível. O período analisado é sempre o mês
- * civil anterior (já totalmente encerrado), então esse valor só controla
- * a partir de quando o card aparece — nunca corre o risco de fechar um mês
- * pela metade. Fixado em 15 para teste; ajuste quando definir a regra final
- * (ex.: 1, para liberar logo no início do mês seguinte).
+ * Único dia do mês (fuso America/Recife) em que a retrospectiva do mês
+ * anterior fica disponível — nos demais dias não aparece. O período
+ * analisado é sempre o mês civil anterior (já totalmente encerrado), então
+ * esse valor só controla quando o card aparece, nunca corre o risco de
+ * fechar um mês pela metade. Fixado em 17 para teste; ajuste quando definir
+ * a regra final.
  */
-export const DIA_EXIBICAO_RETROSPECTIVA = 15;
+export const DIA_EXIBICAO_RETROSPECTIVA = 17;
 
 export const FAIXAS_INSIGNIAS: Array<InsigniaRegularidade & { level: NivelInsignia }> = [
   { level: "diamante", score: 0, name: "Diamante", emoji: "💎", faixaMinima: 98, description: "Regularidade extraordinária!" },

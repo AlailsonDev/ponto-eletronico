@@ -6,14 +6,15 @@ import { limitesDoMes } from "@/lib/formatadores";
 
 /**
  * Período (mês civil) cuja retrospectiva deve ser exibida hoje, ou null se
- * ainda não é hora. Sempre aponta para o mês anterior ao atual — já
+ * hoje não é o dia. Sempre aponta para o mês anterior ao atual — já
  * totalmente encerrado, então o cálculo nunca pega um dia pela metade —, e
- * só passa a valer a partir do dia DIA_EXIBICAO_RETROSPECTIVA do mês
- * corrente (ex.: retrospectiva de agosto liberada a partir de 15/09).
+ * só vale exatamente no dia DIA_EXIBICAO_RETROSPECTIVA do mês corrente (ex.:
+ * retrospectiva de agosto liberada só em 17/09; em 18/09 já não aparece
+ * mais).
  */
 export async function periodoParaExibicaoHoje(): Promise<string | null> {
   const agora = dataNoFusoLocal();
-  if (agora.getDate() < DIA_EXIBICAO_RETROSPECTIVA) return null;
+  if (agora.getDate() !== DIA_EXIBICAO_RETROSPECTIVA) return null;
   const mesAnterior = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
   return `${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth() + 1).padStart(2, "0")}`;
 }
