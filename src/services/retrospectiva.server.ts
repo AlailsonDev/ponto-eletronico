@@ -1,22 +1,45 @@
 import { adminDb } from "@/lib/firebase/admin";
 import type { Jornada } from "@/types/jornada";
 import type { RegistroPonto } from "@/types/registroPonto";
-import { calcularRetrospectiva, DIA_EXIBICAO_RETROSPECTIVA, getRegularityBadge } from "@/lib/retrospectiva";
+import { calcularRetrospectiva, formatarISO, getRegularityBadge, primeiroDiaUtilDoMes, PRIMEIRO_PERIODO_RETROSPECTIVA } from "@/lib/retrospectiva";
 import { limitesDoMes } from "@/lib/formatadores";
 
 /**
- * Período (mês civil) cuja retrospectiva deve ser exibida hoje, ou null se
- * hoje não é o dia. Sempre aponta para o mês anterior ao atual — já
- * totalmente encerrado, então o cálculo nunca pega um dia pela metade —, e
- * só vale exatamente no dia DIA_EXIBICAO_RETROSPECTIVA do mês corrente (ex.:
- * retrospectiva de agosto liberada só em 17/09; em 18/09 já não aparece
- * mais).
+ * Período (mês civil) cuja retrospectiva está pendente hoje, ou null se
+ * ainda não chegou a hora. Aponta sempre para o mês **anterior**, já
+ * totalmente encerrado — assim o cálculo não depende de um dia em
+ * andamento e o resultado é idêntico a qualquer hora do dia. Fica
+ * disponível a partir do primeiro dia útil do mês corrente e permanece
+ * pendente até o funcionário efetivamente vê-la (ver rota da API), de modo
+ * que quem estava ausente no dia não perde a retrospectiva. Meses anteriores
+ * a PRIMEIRO_PERIODO_RETROSPECTIVA (fase de testes) são ignorados.
  */
-export async function periodoParaExibicaoHoje(): Promise<string | null> {
+export async function periodoPendenteHoje(): Promise<string | null> {
   const agora = dataNoFusoLocal();
-  if (agora.getDate() !== DIA_EXIBICAO_RETROSPECTIVA) return null;
+  const periodoAtual = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`;
+  const feriados = await listarFeriados(periodoAtual);
+  const primeiroDiaUtil = primeiroDiaUtilDoMes(agora.getFullYear(), agora.getMonth() + 1, feriados);
+  if (formatarISO(agora) < primeiroDiaUtil) return null;
   const mesAnterior = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
-  return `${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth() + 1).padStart(2, "0")}`;
+  const periodo = `${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth() + 1).padStart(2, "0")}`;
+  return periodo < PRIMEIRO_PERIODO_RETROSPECTIVA ? null : periodo;
+}
+
+/** Data ("YYYY-MM-DD") no fuso de operação. Sem argumento, hoje. */
+export function dataLocalISO(base?: Date): string {
+  return formatarISO(dataNoFusoLocal(base));
+}
+
+/**
+ * false quando o funcionário foi admitido depois do fim do período — não
+ * há jornada nenhuma para retrospectivar, e mostrar "0 dias / Bronze / 0%"
+ * para quem acabou de entrar seria enganoso.
+ */
+export function admitidoNoPeriodo(usuario: FirebaseFirestore.DocumentData | undefined, periodo: string): boolean {
+  const admissao = usuario?.dataAdmissao;
+  if (typeof admissao?.toDate !== "function") return true;
+  const [, fimPeriodo] = limitesDoMes(periodo);
+  return dataLocalISO(admissao.toDate()) <= fimPeriodo;
 }
 
 export async function construirRetrospectiva(uid: string, usuario: FirebaseFirestore.DocumentData | undefined, periodo: string) {
@@ -42,6 +65,6 @@ async function listarFeriados(periodo: string): Promise<Set<string>> {
   return new Set(snapshot.docs.map((documento) => String(documento.data().data)));
 }
 
-function dataNoFusoLocal(): Date {
-  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Recife" }));
+function dataNoFusoLocal(base: Date = new Date()): Date {
+  return new Date(base.toLocaleString("en-US", { timeZone: "America/Recife" }));
 }

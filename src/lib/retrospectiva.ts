@@ -8,14 +8,23 @@ import { limitesDoMes } from "@/lib/formatadores";
 export const REGULARIDADE_PESOS = { pontualidade: 0.4, jornada: 0.4, ocorrencias: 0.2 } as const;
 
 /**
- * Único dia do mês (fuso America/Recife) em que a retrospectiva do mês
- * anterior fica disponível — nos demais dias não aparece. O período
- * analisado é sempre o mês civil anterior (já totalmente encerrado), então
- * esse valor só controla quando o card aparece, nunca corre o risco de
- * fechar um mês pela metade. Fixado em 17 para teste; ajuste quando definir
- * a regra final.
+ * Primeiro mês ("YYYY-MM") que gera retrospectiva. Meses anteriores ficaram
+ * na fase de testes da funcionalidade e não devem render retrospectiva nem
+ * insígnia — setembro/2026 é o primeiro período valendo de verdade, exibido
+ * a partir do primeiro dia útil de outubro/2026.
  */
-export const DIA_EXIBICAO_RETROSPECTIVA = 17;
+export const PRIMEIRO_PERIODO_RETROSPECTIVA = "2026-09";
+
+/**
+ * Primeiro dia útil do mês: segunda a sexta, exceto feriados cadastrados na
+ * coleção "feriados". A partir dele a retrospectiva do mês anterior — já
+ * encerrado — fica disponível.
+ */
+export function primeiroDiaUtilDoMes(ano: number, mes: number, feriados: Set<string>): string {
+  const data = new Date(ano, mes - 1, 1, 12);
+  while (data.getDay() === 0 || data.getDay() === 6 || feriados.has(formatarISO(data))) data.setDate(data.getDate() + 1);
+  return formatarISO(data);
+}
 
 export const FAIXAS_INSIGNIAS: Array<InsigniaRegularidade & { level: NivelInsignia }> = [
   { level: "diamante", score: 0, name: "Diamante", emoji: "💎", faixaMinima: 98, description: "Regularidade extraordinária!" },
@@ -77,6 +86,6 @@ function adicionarDia(data: string): string {
   return formatarISO(objeto);
 }
 
-function formatarISO(data: Date): string {
+export function formatarISO(data: Date): string {
   return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-${String(data.getDate()).padStart(2, "0")}`;
 }
