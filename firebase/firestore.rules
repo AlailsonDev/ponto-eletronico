@@ -156,5 +156,21 @@ service cloud.firestore {
       allow create, update, delete: if souAdmin();
     }
 
+    // Documento único usado só como "sinal" de mudança para o alerta de
+    // correções pendentes no cabeçalho. Uma query com list() na coleção
+    // solicitacoes_correcao não é viável aqui: a regra dela depende de
+    // resource.data (setor/dono) e o Firestore recusa list() inteiro
+    // sempre que não consegue provar, só pelos filtros da query, que todo
+    // documento retornado atende à regra — por isso o client não escuta a
+    // coleção diretamente. Em vez disso, a API (Admin SDK, contorna estas
+    // regras) toca este documento a cada solicitação criada/decidida, e o
+    // client só escuta esse get() único para saber quando reconsultar
+    // /api/correcoes, que aplica o filtro de verdade (setor do gestor,
+    // exclusão de solicitações de gestor/admin) no servidor.
+    match /contadores/correcoes {
+      allow read: if souAdmin() || (souAtivo() && meuPerfil().perfil == 'gestor');
+      allow write: if false;
+    }
+
   }
 }

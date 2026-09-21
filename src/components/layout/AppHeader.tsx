@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import clsx from "clsx";
+import { doc, onSnapshot } from "firebase/firestore";
 import { LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import { logout } from "@/services/auth.service";
 import { useAuth } from "@/hooks/useAuth";
+import { db } from "@/lib/firebase/config";
 import type { Usuario } from "@/types/usuario";
 
 // Todo perfil bate ponto próprio, então "Ponto" e "Histórico" aparecem para
@@ -66,8 +68,25 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
     }
 
     carregarSolicitacoesPendentes();
-    return () => { ativo = false; };
-  }, [firebaseUser, pathname, usuario.perfil]);
+
+    // O filtro correto (setor do gestor, exclusão de solicitações de
+    // gestor/admin) só existe no servidor — por isso não recalculamos a
+    // contagem aqui. Uma query direta na coleção solicitacoes_correcao não
+    // funciona: sua regra de segurança depende de resource.data (setor/dono)
+    // e o Firestore recusa list() inteiro nesse caso (nem admin passaria).
+    // Em vez disso, escutamos um documento único que a API toca a cada
+    // solicitação criada/decidida — ele serve só de gatilho para reconsultar
+    // /api/correcoes na hora, sem depender de navegação ou reload.
+    const referenciaContador = doc(db, "contadores", "correcoes");
+    const unsubscribe = onSnapshot(referenciaContador, () => carregarSolicitacoesPendentes(), () => {
+      // Falha no listener não deve travar o cabeçalho; mantém o último valor carregado.
+    });
+
+    return () => {
+      ativo = false;
+      unsubscribe();
+    };
+  }, [firebaseUser, usuario.perfil]);
 
   useEffect(() => {
     setMenuAberto(false);

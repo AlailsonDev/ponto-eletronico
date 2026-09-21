@@ -3,6 +3,18 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb, verificarTokenAtivo, verificarTokenGestorOuAdmin } from "@/lib/firebase/admin";
 import type { StatusSolicitacaoCorrecao } from "@/types/registroPonto";
 
+/**
+ * Toca o documento-sinal que o cabeçalho escuta em tempo real (ver
+ * firestore.rules) para saber quando reconsultar a contagem de solicitações
+ * pendentes — chamado toda vez que uma solicitação é criada ou decidida.
+ */
+async function avisarMudancaDeSolicitacoes(): Promise<void> {
+  await adminDb.collection("contadores").doc("correcoes").set(
+    { atualizadoEm: FieldValue.serverTimestamp() },
+    { merge: true }
+  );
+}
+
 interface CorrecaoInput {
   acao?: "criar";
   solicitacaoId?: string;
@@ -82,6 +94,7 @@ export async function POST(request: NextRequest) {
         status: "pendente",
         criadoEm: FieldValue.serverTimestamp(),
       });
+      await avisarMudancaDeSolicitacoes();
       return NextResponse.json({ id: solicitacao.id }, { status: 201 });
     }
 
@@ -157,6 +170,7 @@ export async function POST(request: NextRequest) {
         criadoEm: agora,
       });
     });
+    await avisarMudancaDeSolicitacoes();
 
     return NextResponse.json({ ok: true });
   } catch (erro) {
