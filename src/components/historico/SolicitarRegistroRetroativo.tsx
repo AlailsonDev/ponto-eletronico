@@ -56,7 +56,7 @@ export function SolicitarRegistroRetroativo({
 
   return (
     <section className="mt-6 rounded-card border border-surface-border bg-white p-5">
-      <h2 className="font-display text-sm font-semibold text-ink-900">Esqueceu de bater?</h2>
+      <h2 className="font-display text-sm font-semibold text-ink-900">Esqueceu alguma batida em dias anteriores?</h2>
       <p className="mt-1 font-body text-sm text-ink-600">
         Estava ausente, esqueceu ou o sistema ficou fora do ar? Peça a inclusão do ponto que faltou — ele só passa a
         valer depois de aprovado pelo seu gestor.
