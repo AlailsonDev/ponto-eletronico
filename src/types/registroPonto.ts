@@ -25,6 +25,11 @@ export interface RegistroPonto {
   observacao?: string;
   origem: "web" | "qrcode"; // "qrcode" preparado para uso futuro
   editadoPorCorrecao: boolean;
+  // true só quando este registro nasceu de uma solicitação de "registro
+  // esquecido" aprovada (nunca foi batido ao vivo, sem validação de
+  // geolocalização) — usado para excluir o dia da nota de regularidade da
+  // retrospectiva, sem puni-lo nem premiá-lo.
+  registroRetroativo?: boolean;
   precisaoMetros?: number;
   distanciaMetros?: number;
   localTrabalhoId?: string;
@@ -33,6 +38,8 @@ export interface RegistroPonto {
 }
 
 export type StatusSolicitacaoCorrecao = "pendente" | "aprovada" | "rejeitada";
+
+export type CategoriaAusencia = "atestado" | "folga" | "outro";
 
 export interface SolicitacaoCorrecao {
   id: string;
@@ -43,8 +50,11 @@ export interface SolicitacaoCorrecao {
   usuarioNome?: string;
   setorId: string;
   data: string;
-  tipo: TipoRegistro;
-  novoHorario: string; // "HH:mm"
+  // tipo/novoHorario ausentes quando `categoria` está presente — é uma
+  // justificativa de ausência (dia inteiro), não uma correção de horário.
+  tipo?: TipoRegistro;
+  novoHorario?: string; // "HH:mm"
+  categoria?: CategoriaAusencia;
   motivo: string;
   status: StatusSolicitacaoCorrecao;
   criadoEm: Timestamp;

@@ -51,7 +51,15 @@ export interface DadosCalculoRetrospectiva {
   dias: ResumoJornadaDia[];
 }
 
-export function calcularRetrospectiva(periodo: string, registros: RegistroPonto[], jornada: Jornada | null, feriados: Set<string>): DadosCalculoRetrospectiva {
+/**
+ * `diasNeutros`: datas ("YYYY-MM-DD") que não entram na nota de
+ * regularidade — nem a favor, nem contra. São dias com ausência justificada
+ * aprovada ou com registro retroativo aprovado (ponto nunca batido ao vivo,
+ * sem validação de geolocalização): contá-los como falha seria injusto com
+ * quem teve um motivo legítimo, mas contá-los como um dia perfeito
+ * recompensaria um registro que ninguém verificou de fato.
+ */
+export function calcularRetrospectiva(periodo: string, registros: RegistroPonto[], jornada: Jornada | null, feriados: Set<string>, diasNeutros: Set<string> = new Set()): DadosCalculoRetrospectiva {
   const [dataInicio, dataFim] = limitesDoMes(periodo);
   const registrosPorDia = new Map<string, RegistroPonto[]>();
   for (const registro of registros) registrosPorDia.set(registro.data, [...(registrosPorDia.get(registro.data) ?? []), registro]);
@@ -59,7 +67,9 @@ export function calcularRetrospectiva(periodo: string, registros: RegistroPonto[
   const diasTrabalho = new Set(diasTrabalhoDaJornada(jornada));
   for (let data = dataInicio; data <= dataFim; data = adicionarDia(data)) {
     const objeto = new Date(`${data}T12:00:00`);
-    if (diasTrabalho.has(objeto.getDay()) && !feriados.has(data)) dias.push(calcularResumoDia(data, registrosPorDia.get(data) ?? [], jornada));
+    if (diasTrabalho.has(objeto.getDay()) && !feriados.has(data) && !diasNeutros.has(data)) {
+      dias.push(calcularResumoDia(data, registrosPorDia.get(data) ?? [], jornada));
+    }
   }
   const divisor = dias.length || 1;
   const diasTrabalhados = dias.filter((dia) => dia.entrada && dia.saida && (dia.minutosTrabalhados ?? 0) > 0).length;

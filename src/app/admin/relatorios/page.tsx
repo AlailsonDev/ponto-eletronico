@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Button } from "@/components/ui/Button";
 import { formatarDataBR, formatarMinutos } from "@/lib/formatadores";
+import { RÓTULOS_CATEGORIA_AUSENCIA } from "@/lib/mesclarAusencias";
 
 function nomeMes(anoMes: string) {
   return new Date(`${anoMes}-01T12:00:00`).toLocaleDateString("pt-BR", {
@@ -68,7 +69,8 @@ async function baixarExcel(linhas: LinhaRelatorio[], anoMes: string) {
     { header: "Localização", key: "localizacao", width: 16 },
     { header: "Distância (m)", key: "distancia", width: 16 },
     { header: "Precisão (m)", key: "precisao", width: 16 },
-    { header: "Status", key: "status", width: 16 },
+    { header: "Status", key: "status", width: 20 },
+    { header: "Motivo da ausência", key: "motivoAusencia", width: 30 },
   ];
   aplicarEstiloCabecalho(detalhamento.getRow(1));
   for (const linha of linhas) {
@@ -84,14 +86,15 @@ async function baixarExcel(linhas: LinhaRelatorio[], anoMes: string) {
         total: formatarMinutos(dia.minutosTrabalhados),
         atraso: formatarMinutos(dia.minutosAtraso),
         extra: formatarMinutos(dia.minutosHoraExtra),
-        status: dia.incompleta ? "Incompleto" : "Normal",
+        status: dia.ausencia ? RÓTULOS_CATEGORIA_AUSENCIA[dia.ausencia.categoria] : dia.incompleta ? "Incompleto" : "Normal",
         localizacao: dia.entrada?.geolocalizacaoValidada ? "Validada" : "Não informada",
         distancia: dia.entrada?.distanciaMetros ?? "-",
         precisao: dia.entrada?.precisaoMetros ?? "-",
+        motivoAusencia: dia.ausencia?.motivo ?? "-",
       });
     }
   }
-  detalhamento.autoFilter = { from: "A1", to: "N1" };
+  detalhamento.autoFilter = { from: "A1", to: "O1" };
   detalhamento.views = [{ state: "frozen", ySplit: 1 }];
 
   const buffer = await workbook.xlsx.writeBuffer();

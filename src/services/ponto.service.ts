@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase/config";
 import type {
+  CategoriaAusencia,
   RegistroPonto,
   SolicitacaoCorrecao,
   TipoRegistro,
@@ -190,15 +191,68 @@ export async function solicitarRegistroRetroativo(input: {
   if (!resposta.ok) throw new Error(dados.erro ?? "Não foi possível enviar a solicitação.");
 }
 
-export async function buscarSolicitacoesCorrecao(
-  usuarioId: string
+/**
+ * Justifica a ausência de um dia inteiro (atestado, folga, outro motivo) —
+ * sem horário, sem marco: só o dia e o motivo. Mesma fila de aprovação de
+ * gestor/admin das demais solicitações; quando aprovada, não cria nem altera
+ * nenhum registro de ponto, só marca o dia como justificado.
+ */
+export async function justificarAusencia(input: {
+  data: string;
+  categoria: CategoriaAusencia;
+  motivo: string;
+  idToken: string;
+}): Promise<void> {
+  const resposta = await fetch("/api/correcoes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${input.idToken}` },
+    body: JSON.stringify({
+      acao: "criar",
+      data: input.data,
+      categoria: input.categoria,
+      motivo: input.motivo.trim(),
+    }),
+  });
+  const dados = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) throw new Error(dados.erro ?? "Não foi possível enviar a justificativa.");
+}
+
+/**
+ * Busca as justificativas de ausência já aprovadas num período — usada pelo
+ * relatório administrativo para trazer o motivo da falta para o
+ * detalhamento diário. Aplica no servidor o mesmo filtro por setor que a
+ * fila de aprovação usa (gestor só vê o próprio setor).
+ */
+export async function buscarAusenciasAprovadas(
+  dataInicio: string,
+  dataFim: string,
+  idToken: string
 ): Promise<SolicitacaoCorrecao[]> {
-  const solicitacoes = await getDocs(
-    query(collection(db, "solicitacoes_correcao"), where("usuarioId", "==", usuarioId))
-  );
-  return solicitacoes.docs.map(
-    (documento) => ({ id: documento.id, ...documento.data() } as SolicitacaoCorrecao)
-  ).sort((a, b) => b.criadoEm?.toMillis() - a.criadoEm?.toMillis());
+  const parametros = new URLSearchParams({ status: "aprovada", inicio: dataInicio, fim: dataFim });
+  const resposta = await fetch(`/api/correcoes?${parametros}`, {
+    headers: { Authorization: `Bearer ${idToken}` },
+  });
+  if (!resposta.ok) return [];
+  const solicitacoes = (await resposta.json()) as SolicitacaoCorrecao[];
+  return solicitacoes.filter((item) => !!item.categoria);
+}
+
+/**
+ * Busca as próprias solicitações do usuário logado (qualquer status) — usada
+ * no histórico pessoal. Vai pela API (Admin SDK) em vez de ler direto do
+ * Firestore: a regra de leitura de solicitacoes_correcao combina "dono OU
+ * admin OU gestor do setor", e o Firestore recusa list() nessa coleção
+ * mesmo quando o filtro da query já restringe ao próprio uid — a prova
+ * exigida pelo motor de regras não fecha com uma condição em OR.
+ */
+export async function buscarSolicitacoesCorrecao(): Promise<SolicitacaoCorrecao[]> {
+  const user = auth.currentUser;
+  if (!user) return [];
+  const resposta = await fetch("/api/correcoes?modo=proprias", {
+    headers: { Authorization: `Bearer ${await user.getIdToken()}` },
+  });
+  if (!resposta.ok) return [];
+  return (await resposta.json()) as SolicitacaoCorrecao[];
 }
 
 export async function buscarSolicitacoesPendentes(): Promise<SolicitacaoCorrecao[]> {

@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb, verificarTokenAtivo, verificarTokenGestorOuAdmin } from "@/lib/firebase/admin";
 import { idRegistroPonto } from "@/lib/validacaoSequencia";
-import type { StatusSolicitacaoCorrecao, TipoRegistro } from "@/types/registroPonto";
+import type { CategoriaAusencia, StatusSolicitacaoCorrecao, TipoRegistro } from "@/types/registroPonto";
 
 const TIPOS: TipoRegistro[] = ["ENTRADA", "SAIDA_ALMOCO", "RETORNO_ALMOCO", "SAIDA"];
+const CATEGORIAS_AUSENCIA: CategoriaAusencia[] = ["atestado", "folga", "outro"];
 
 function dataLocalHoje(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Recife" }).format(new Date());
@@ -33,8 +34,13 @@ interface CorrecaoInput {
   data?: string;
   tipo?: TipoRegistro;
   novoHorario?: string;
+  // Presente só quando é uma justificativa de ausência (dia inteiro, sem
+  // horário nenhum) — atestado, folga ou outro motivo.
+  categoria?: CategoriaAusencia;
   motivo?: string;
 }
+
+const STATUS_VALIDOS: StatusSolicitacaoCorrecao[] = ["pendente", "aprovada", "rejeitada"];
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,12 +48,44 @@ export async function GET(request: NextRequest) {
     const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
     if (!idToken) return NextResponse.json({ erro: "Não autenticado." }, { status: 401 });
 
+    // Qualquer funcionário pode listar as PRÓPRIAS solicitações (qualquer
+    // status) — usado no histórico pessoal para mostrar o que já foi pedido
+    // e o resultado de justificativas de ausência já aprovadas. Precisa ser
+    // uma rota própria (não dá pra fazer isso direto do client contra o
+    // Firestore): a regra de leitura de solicitacoes_correcao combina várias
+    // condições com "OU" (dono, admin, gestor do setor), e o Firestore
+    // recusa list() inteiro sempre que não consegue provar isso só pelos
+    // filtros da query — mesmo quando o próprio dono está pedindo.
+    if (request.nextUrl.searchParams.get("modo") === "proprias") {
+      const { uid } = await verificarTokenAtivo(idToken);
+      const snapshot = await adminDb.collection("solicitacoes_correcao").where("usuarioId", "==", uid).get();
+      const solicitacoes = snapshot.docs
+        .map((documento) => ({ id: documento.id, ...documento.data() }) as Record<string, unknown> & { criadoEm?: FirebaseFirestore.Timestamp })
+        .sort((a, b) => (b.criadoEm?.toMillis?.() ?? 0) - (a.criadoEm?.toMillis?.() ?? 0));
+      return NextResponse.json(solicitacoes);
+    }
+
     const { usuario } = await verificarTokenGestorOuAdmin(idToken);
+    const statusParam = request.nextUrl.searchParams.get("status");
+    const status: StatusSolicitacaoCorrecao = STATUS_VALIDOS.includes(statusParam as StatusSolicitacaoCorrecao)
+      ? (statusParam as StatusSolicitacaoCorrecao)
+      : "pendente";
+    // Recorte opcional de período — usado pelo relatório mensal para buscar
+    // só as justificativas de ausência aprovadas daquele mês, sem depender
+    // de índice composto (filtra em memória, igual às outras consultas).
+    const inicio = request.nextUrl.searchParams.get("inicio");
+    const fim = request.nextUrl.searchParams.get("fim");
+
     const snapshot = await adminDb
       .collection("solicitacoes_correcao")
-      .where("status", "==", "pendente")
+      .where("status", "==", status)
       .get();
     const solicitacoes = await Promise.all(snapshot.docs
+      .filter((documento) => {
+        if (!inicio && !fim) return true;
+        const data = documento.data().data as string;
+        return (!inicio || data >= inicio) && (!fim || data <= fim);
+      })
       .sort((a, b) => {
         const primeiro = a.data().criadoEm?.toMillis?.() ?? 0;
         const segundo = b.data().criadoEm?.toMillis?.() ?? 0;
@@ -82,7 +120,47 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as CorrecaoInput;
     if (body.acao === "criar") {
       const { uid, usuario } = await verificarTokenAtivo(idToken);
-      if (!body.novoHorario || !body.motivo || body.motivo.trim().length < 5) {
+      if (!body.motivo || body.motivo.trim().length < 5) {
+        return NextResponse.json({ erro: "Dados da solicitação inválidos." }, { status: 400 });
+      }
+
+      // categoria presente: justificativa de ausência do dia inteiro
+      // (atestado, folga, outro motivo) — não tem horário nem marco, só o
+      // dia e o motivo. Segue para a mesma fila de aprovação do gestor.
+      if (body.categoria) {
+        if (!CATEGORIAS_AUSENCIA.includes(body.categoria)) {
+          return NextResponse.json({ erro: "Categoria inválida." }, { status: 400 });
+        }
+        if (!body.data || !/^\d{4}-\d{2}-\d{2}$/.test(body.data)) {
+          return NextResponse.json({ erro: "Dados da solicitação inválidos." }, { status: 400 });
+        }
+        if (body.data > dataLocalHoje()) {
+          return NextResponse.json({ erro: "Não é possível justificar uma ausência em data futura." }, { status: 400 });
+        }
+        const pendentesDoUsuario = await adminDb.collection("solicitacoes_correcao").where("usuarioId", "==", uid).get();
+        const jaPendente = pendentesDoUsuario.docs.some((documento) => {
+          const dados = documento.data();
+          return dados.status === "pendente" && dados.data === body.data && !!dados.categoria;
+        });
+        if (jaPendente) {
+          return NextResponse.json({ erro: "Você já tem uma justificativa pendente para este dia." }, { status: 409 });
+        }
+
+        const solicitacao = await adminDb.collection("solicitacoes_correcao").add({
+          usuarioId: uid,
+          usuarioNome: usuario?.nome ?? null,
+          setorId: usuario?.setorId,
+          data: body.data,
+          categoria: body.categoria,
+          motivo: body.motivo.trim(),
+          status: "pendente",
+          criadoEm: FieldValue.serverTimestamp(),
+        });
+        await avisarMudancaDeSolicitacoes();
+        return NextResponse.json({ id: solicitacao.id }, { status: 201 });
+      }
+
+      if (!body.novoHorario) {
         return NextResponse.json({ erro: "Dados da solicitação inválidos." }, { status: 400 });
       }
       if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(body.novoHorario)) {
@@ -175,7 +253,10 @@ export async function POST(request: NextRequest) {
       }
 
       const agora = Timestamp.now();
-      if (body.decisao === "aprovada") {
+      // Justificativa de ausência: não mexe em nenhum registro_ponto — só a
+      // aprovação abaixo já é o suficiente, o dia fica marcado nesta própria
+      // solicitação (consultada pelo histórico/relatórios).
+      if (body.decisao === "aprovada" && !solicitacao.categoria) {
         if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(solicitacao.novoHorario)) {
           throw new Error("HORARIO_INVALIDO");
         }
@@ -223,6 +304,7 @@ export async function POST(request: NextRequest) {
             dataHora,
             origem: "web",
             editadoPorCorrecao: true,
+            registroRetroativo: true,
             observacao: `Registro retroativo aprovado: ${solicitacao.motivo}`,
             criadoEm: agora,
           });
@@ -237,16 +319,19 @@ export async function POST(request: NextRequest) {
       });
       const auditoriaRef = adminDb.collection("auditoria").doc();
       transaction.set(auditoriaRef, {
-        acao: "correcao_ponto",
+        acao: solicitacao.categoria ? "justificativa_ausencia" : "correcao_ponto",
         administradorId: uid,
-        // Sem registroId (registro retroativo), usa o id que acabou de ser
-        // gerado — nunca undefined, que o Firestore rejeitaria na escrita.
-        alvoId: solicitacao.registroId ?? idRegistroPonto(solicitacao.usuarioId, solicitacao.data, solicitacao.tipo),
+        // Ausência não tem registro nenhum; registro retroativo usa o id
+        // que acabou de ser gerado. Nunca undefined, que o Firestore
+        // rejeitaria na escrita.
+        alvoId: solicitacao.categoria
+          ? `${solicitacao.usuarioId}_${solicitacao.data}`
+          : solicitacao.registroId ?? idRegistroPonto(solicitacao.usuarioId, solicitacao.data, solicitacao.tipo),
         detalhes: {
           solicitacaoId: body.solicitacaoId,
           decisao: body.decisao,
           usuarioId: solicitacao.usuarioId,
-          novoHorario: solicitacao.novoHorario,
+          ...(solicitacao.categoria ? { categoria: solicitacao.categoria } : { novoHorario: solicitacao.novoHorario }),
         },
         criadoEm: agora,
       });

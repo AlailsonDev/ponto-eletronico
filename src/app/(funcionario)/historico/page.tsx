@@ -10,6 +10,7 @@ import { FiltroMes } from "@/components/historico/FiltroMes";
 import { TabelaHistorico } from "@/components/historico/TabelaHistorico";
 import { SolicitarCorrecao } from "@/components/historico/SolicitarCorrecao";
 import { SolicitarRegistroRetroativo } from "@/components/historico/SolicitarRegistroRetroativo";
+import { JustificarAusencia } from "@/components/historico/JustificarAusencia";
 import type { SolicitacaoCorrecao } from "@/types/registroPonto";
 import { buscarSolicitacoesCorrecao } from "@/services/ponto.service";
 
@@ -20,10 +21,14 @@ function HistoricoConteudo() {
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoCorrecao[]>([]);
 
   useEffect(() => {
-    if (perfil) buscarSolicitacoesCorrecao(perfil.uid).then(setSolicitacoes).catch(() => {});
+    if (perfil) buscarSolicitacoesCorrecao().then(setSolicitacoes).catch(() => {});
   }, [perfil]);
 
   if (!perfil) return null;
+
+  const ausenciasAprovadasDoMes = solicitacoes.filter(
+    (item) => item.categoria && item.status === "aprovada" && item.data.startsWith(anoMesSelecionado)
+  );
 
   return (
     <div className="min-h-screen bg-surface">
@@ -56,13 +61,16 @@ function HistoricoConteudo() {
           </div>
         ) : (
           <>
-            <TabelaHistorico dias={dias} />
+            <TabelaHistorico dias={dias} ausencias={ausenciasAprovadasDoMes} />
             <SolicitarCorrecao
               registros={registros}
               solicitacoes={solicitacoes}
               onCriada={(solicitacao) => setSolicitacoes((atuais) => [solicitacao, ...atuais])}
             />
             <SolicitarRegistroRetroativo
+              onCriada={(solicitacao) => setSolicitacoes((atuais) => [solicitacao, ...atuais])}
+            />
+            <JustificarAusencia
               onCriada={(solicitacao) => setSolicitacoes((atuais) => [solicitacao, ...atuais])}
             />
           </>

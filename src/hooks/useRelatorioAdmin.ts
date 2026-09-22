@@ -3,17 +3,18 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useMemo, useState } from "react";
 import type { Jornada } from "@/types/jornada";
-import type { RegistroPonto, ResumoJornadaDia } from "@/types/registroPonto";
+import type { RegistroPonto, SolicitacaoCorrecao } from "@/types/registroPonto";
 import type { Usuario } from "@/types/usuario";
 import { listarFuncionariosParaRelatorio } from "@/services/usuarios.service";
 import { listarJornadas } from "@/services/jornadas.service";
-import { buscarRegistrosParaRelatorio } from "@/services/ponto.service";
+import { buscarAusenciasAprovadas, buscarRegistrosParaRelatorio } from "@/services/ponto.service";
 import { calcularResumoDia } from "@/lib/calculoJornada";
 import { limitesDoMes, mesAtualISO } from "@/lib/formatadores";
+import { mesclarComAusencias, type DiaComAusencia } from "@/lib/mesclarAusencias";
 
 export interface LinhaRelatorio {
   usuario: Usuario;
-  dias: ResumoJornadaDia[];
+  dias: DiaComAusencia[];
   diasComRegistro: number;
   diasIncompletos: number;
   minutosTrabalhados: number;
@@ -22,11 +23,12 @@ export interface LinhaRelatorio {
 }
 
 export function useRelatorioAdmin() {
-  const { perfil } = useAuth();
+  const { perfil, firebaseUser } = useAuth();
   const [anoMesSelecionado, setAnoMesSelecionado] = useState(mesAtualISO());
   const [funcionarios, setFuncionarios] = useState<Usuario[]>([]);
   const [jornadas, setJornadas] = useState<Jornada[]>([]);
   const [registros, setRegistros] = useState<RegistroPonto[]>([]);
+  const [ausencias, setAusencias] = useState<SolicitacaoCorrecao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [dataInicio, dataFim] = limitesDoMes(anoMesSelecionado);
@@ -36,19 +38,21 @@ export function useRelatorioAdmin() {
     setCarregando(true);
     setErro(null);
 
-    if (!perfil) return () => { cancelado = true; };
+    if (!perfil || !firebaseUser) return () => { cancelado = true; };
 
     const setorId = perfil.perfil === "gestor" ? perfil.setorId : undefined;
     Promise.all([
       listarFuncionariosParaRelatorio(setorId),
       listarJornadas(),
       buscarRegistrosParaRelatorio(dataInicio, dataFim, setorId),
+      firebaseUser.getIdToken().then((idToken) => buscarAusenciasAprovadas(dataInicio, dataFim, idToken)),
     ])
-      .then(([funcionariosCarregados, jornadasCarregadas, registrosCarregados]) => {
+      .then(([funcionariosCarregados, jornadasCarregadas, registrosCarregados, ausenciasCarregadas]) => {
         if (cancelado) return;
         setFuncionarios(funcionariosCarregados);
         setJornadas(jornadasCarregadas);
         setRegistros(registrosCarregados);
+        setAusencias(ausenciasCarregadas);
       })
       .catch(() => {
         if (!cancelado) setErro("Não foi possível carregar o relatório. Tente novamente.");
@@ -60,7 +64,7 @@ export function useRelatorioAdmin() {
     return () => {
       cancelado = true;
     };
-  }, [dataInicio, dataFim, perfil]);
+  }, [dataInicio, dataFim, perfil, firebaseUser]);
 
   const jornadasPorId = useMemo(() => {
     const mapa = new Map<string, Jornada>();
@@ -74,6 +78,12 @@ export function useRelatorioAdmin() {
       const lista = registrosPorUsuario.get(registro.usuarioId) ?? [];
       lista.push(registro);
       registrosPorUsuario.set(registro.usuarioId, lista);
+    }
+    const ausenciasPorUsuario = new Map<string, SolicitacaoCorrecao[]>();
+    for (const ausencia of ausencias) {
+      const lista = ausenciasPorUsuario.get(ausencia.usuarioId) ?? [];
+      lista.push(ausencia);
+      ausenciasPorUsuario.set(ausencia.usuarioId, lista);
     }
 
     return funcionarios.map((usuario) => {
@@ -89,10 +99,15 @@ export function useRelatorioAdmin() {
       const dias = Array.from(registrosPorDia.entries())
         .sort(([dataA], [dataB]) => dataA.localeCompare(dataB))
         .map(([data, registrosDoDia]) => calcularResumoDia(data, registrosDoDia, jornada));
+      // Dias só com ausência (nenhum registro de ponto) entram aqui para o
+      // detalhamento diário mostrar o motivo — não contam em
+      // diasComRegistro/diasIncompletos, que continuam medindo pontos reais.
+      const diasComAusencia = mesclarComAusencias(dias, ausenciasPorUsuario.get(usuario.uid) ?? [])
+        .sort((a, b) => a.data.localeCompare(b.data));
 
       return {
         usuario,
-        dias,
+        dias: diasComAusencia,
         diasComRegistro: dias.length,
         diasIncompletos: dias.filter((dia) => dia.incompleta).length,
         minutosTrabalhados: dias.reduce((total, dia) => total + (dia.minutosTrabalhados ?? 0), 0),
@@ -100,7 +115,7 @@ export function useRelatorioAdmin() {
         minutosHoraExtra: dias.reduce((total, dia) => total + (dia.minutosHoraExtra ?? 0), 0),
       };
     });
-  }, [funcionarios, jornadasPorId, registros]);
+  }, [funcionarios, jornadasPorId, registros, ausencias]);
 
   return {
     anoMesSelecionado,

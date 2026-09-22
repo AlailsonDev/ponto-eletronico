@@ -52,17 +52,36 @@ export async function construirRetrospectiva(uid: string, usuario: FirebaseFires
   const registros = snapshot.docs
     .map((documento) => ({ id: documento.id, ...documento.data() } as unknown as RegistroPonto))
     .filter((registro) => registro.data >= inicio && registro.data <= fim);
+  const diasNeutros = new Set<string>([
+    // Registro retroativo: ponto nunca batido ao vivo, sem validação de
+    // geolocalização — não conta a favor nem contra.
+    ...registros.filter((registro) => registro.registroRetroativo).map((registro) => registro.data),
+    ...(await diasComAusenciaAprovada(uid, inicio, fim)),
+  ]);
   // `dias` é o detalhamento diário usado só para calcular os agregados
   // abaixo — não faz parte do tipo Retrospectiva e não pode ser persistido
   // como está: cada dia sem registro tem `entrada`/`saida` undefined, e o
   // Firestore rejeita `undefined` em escritas (quebraria a transação).
-  const { dias: _dias, ...dados } = calcularRetrospectiva(periodo, registros, jornada, feriados);
+  const { dias: _dias, ...dados } = calcularRetrospectiva(periodo, registros, jornada, feriados, diasNeutros);
   return { periodo, dataInicio: inicio, dataFim: fim, ...dados, insignia: getRegularityBadge(dados.regularidade) };
 }
 
 async function listarFeriados(periodo: string): Promise<Set<string>> {
   const snapshot = await adminDb.collection("feriados").where("data", ">=", `${periodo}-01`).where("data", "<=", `${periodo}-31`).get();
   return new Set(snapshot.docs.map((documento) => String(documento.data().data)));
+}
+
+/**
+ * Datas com justificativa de ausência aprovada dentro do período. Filtra em
+ * memória por usuarioId (já indexado por padrão) para não depender de um
+ * índice composto no Firestore, igual às outras consultas deste arquivo.
+ */
+async function diasComAusenciaAprovada(uid: string, inicio: string, fim: string): Promise<string[]> {
+  const snapshot = await adminDb.collection("solicitacoes_correcao").where("usuarioId", "==", uid).get();
+  return snapshot.docs
+    .map((documento) => documento.data())
+    .filter((dados) => dados.status === "aprovada" && !!dados.categoria && dados.data >= inicio && dados.data <= fim)
+    .map((dados) => dados.data as string);
 }
 
 function dataNoFusoLocal(base: Date = new Date()): Date {
