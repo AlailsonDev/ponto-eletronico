@@ -160,6 +160,36 @@ export async function criarSolicitacaoCorrecao(input: {
   if (!resposta.ok) throw new Error("SOLICITACAO_NAO_ENVIADA");
 }
 
+/**
+ * Solicita a criação de um ponto que nunca chegou a ser batido (esqueceu,
+ * estava ausente, sistema fora do ar etc.) — mesmo fluxo de aprovação da
+ * correção normal, mas sem um registro existente para apontar: em vez de
+ * registroId, informa qual dia e qual marco (ENTRADA, SAIDA...) está
+ * faltando. Passa pela mesma aprovação de gestor/admin antes de virar um
+ * registro de verdade.
+ */
+export async function solicitarRegistroRetroativo(input: {
+  data: string;
+  tipo: TipoRegistro;
+  novoHorario: string;
+  motivo: string;
+  idToken: string;
+}): Promise<void> {
+  const resposta = await fetch("/api/correcoes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${input.idToken}` },
+    body: JSON.stringify({
+      acao: "criar",
+      data: input.data,
+      tipo: input.tipo,
+      novoHorario: input.novoHorario,
+      motivo: input.motivo.trim(),
+    }),
+  });
+  const dados = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) throw new Error(dados.erro ?? "Não foi possível enviar a solicitação.");
+}
+
 export async function buscarSolicitacoesCorrecao(
   usuarioId: string
 ): Promise<SolicitacaoCorrecao[]> {

@@ -2,14 +2,10 @@ import { NextRequest, NextResponse, userAgent } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb, verificarTokenAtivo } from "@/lib/firebase/admin";
 import { coordenadasValidas, dispositivoMovel, distanciaEmMetros, localTrabalhoDoUsuario, PRECISAO_MAXIMA_METROS } from "@/lib/geolocalizacao";
+import { idRegistroPonto, TIPO_ANTERIOR } from "@/lib/validacaoSequencia";
 import type { TipoRegistro } from "@/types/registroPonto";
 
 const TIPOS: TipoRegistro[] = ["ENTRADA", "SAIDA_ALMOCO", "RETORNO_ALMOCO", "SAIDA"];
-const ANTES_DE: Partial<Record<TipoRegistro, TipoRegistro>> = {
-  SAIDA_ALMOCO: "ENTRADA",
-  RETORNO_ALMOCO: "SAIDA_ALMOCO",
-  SAIDA: "RETORNO_ALMOCO",
-};
 
 interface RegistroInput {
   data?: string;
@@ -21,10 +17,6 @@ interface RegistroInput {
 
 function dataLocalHoje(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Recife" }).format(new Date());
-}
-
-function idRegistro(usuarioId: string, data: string, tipo: TipoRegistro) {
-  return `${usuarioId}_${data}_${tipo}`;
 }
 
 export async function POST(request: NextRequest) {
@@ -82,13 +74,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const registroRef = adminDb.collection("registros_ponto").doc(idRegistro(uid, body.data, body.tipo));
+    const registroRef = adminDb.collection("registros_ponto").doc(idRegistroPonto(uid, body.data, body.tipo));
     await adminDb.runTransaction(async (transaction) => {
       const registroSnapshot = await transaction.get(registroRef);
       if (registroSnapshot.exists) throw new Error("REGISTRO_JA_EXISTE");
-      const tipoAnterior = ANTES_DE[body.tipo!];
+      const tipoAnterior = TIPO_ANTERIOR[body.tipo!];
       if (tipoAnterior) {
-        const anterior = await transaction.get(adminDb.collection("registros_ponto").doc(idRegistro(uid, body.data!, tipoAnterior)));
+        const anterior = await transaction.get(adminDb.collection("registros_ponto").doc(idRegistroPonto(uid, body.data!, tipoAnterior)));
         if (!anterior.exists) throw new Error("SEQUENCIA_INVALIDA");
       }
       const dadosRegistro: Record<string, unknown> = {

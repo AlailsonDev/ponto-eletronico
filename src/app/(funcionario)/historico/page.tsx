@@ -9,6 +9,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { FiltroMes } from "@/components/historico/FiltroMes";
 import { TabelaHistorico } from "@/components/historico/TabelaHistorico";
 import { SolicitarCorrecao } from "@/components/historico/SolicitarCorrecao";
+import { SolicitarRegistroRetroativo } from "@/components/historico/SolicitarRegistroRetroativo";
 import type { SolicitacaoCorrecao } from "@/types/registroPonto";
 import { buscarSolicitacoesCorrecao } from "@/services/ponto.service";
 
@@ -59,6 +60,9 @@ function HistoricoConteudo() {
             <SolicitarCorrecao
               registros={registros}
               solicitacoes={solicitacoes}
+              onCriada={(solicitacao) => setSolicitacoes((atuais) => [solicitacao, ...atuais])}
+            />
+            <SolicitarRegistroRetroativo
               onCriada={(solicitacao) => setSolicitacoes((atuais) => [solicitacao, ...atuais])}
             />
           </>

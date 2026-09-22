@@ -34,3 +34,21 @@ const RÓTULOS_BOTAO: Record<TipoRegistro, string> = {
 export function rotuloBotaoParaTipo(tipo: TipoRegistro): string {
   return RÓTULOS_BOTAO[tipo];
 }
+
+/**
+ * Tipo que precisa existir antes de um dado tipo ser aceito (ex.: só é
+ * possível bater SAIDA_ALMOCO depois de ENTRADA). Compartilhado entre a
+ * criação de ponto do dia (/api/ponto) e a aprovação de registros
+ * retroativos solicitados via correção (/api/correcoes) — mesma regra de
+ * sequência em ambos os lugares.
+ */
+export const TIPO_ANTERIOR: Partial<Record<TipoRegistro, TipoRegistro>> = {
+  SAIDA_ALMOCO: "ENTRADA",
+  RETORNO_ALMOCO: "SAIDA_ALMOCO",
+  SAIDA: "RETORNO_ALMOCO",
+};
+
+/** ID determinístico de um registro de ponto: "{usuarioId}_{data}_{tipo}". */
+export function idRegistroPonto(usuarioId: string, data: string, tipo: TipoRegistro): string {
+  return `${usuarioId}_${data}_${tipo}`;
+}

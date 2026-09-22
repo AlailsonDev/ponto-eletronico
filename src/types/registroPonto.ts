@@ -36,7 +36,9 @@ export type StatusSolicitacaoCorrecao = "pendente" | "aprovada" | "rejeitada";
 
 export interface SolicitacaoCorrecao {
   id: string;
-  registroId: string;
+  // Ausente quando é uma solicitação de registro retroativo (ponto que
+  // nunca foi batido) em vez de correção de um horário já registrado.
+  registroId?: string;
   usuarioId: string;
   usuarioNome?: string;
   setorId: string;
