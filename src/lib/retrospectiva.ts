@@ -52,12 +52,20 @@ export interface DadosCalculoRetrospectiva {
 }
 
 /**
- * `diasNeutros`: datas ("YYYY-MM-DD") que não entram na nota de
+ * `diasNeutros`: datas ("YYYY-MM-DD") que não entram na NOTA de
  * regularidade — nem a favor, nem contra. São dias com ausência justificada
  * aprovada ou com registro retroativo aprovado (ponto nunca batido ao vivo,
  * sem validação de geolocalização): contá-los como falha seria injusto com
  * quem teve um motivo legítimo, mas contá-los como um dia perfeito
  * recompensaria um registro que ninguém verificou de fato.
+ *
+ * Importante: isso afeta só a NOTA (diasPontuais, diasJornadaCumprida,
+ * regularidade, diasPrevistos) — os totais informativos (diasTrabalhados,
+ * minutosTrabalhados, minutosAtraso, diasComAjuste) continuam somando TODOS
+ * os dias reais do período, neutros inclusive. A pessoa realmente trabalhou
+ * aquelas horas depois de corrigidas/aprovadas; escondê-las da retrospectiva
+ * faria o total divergir do relatório administrativo (que não aplica esse
+ * filtro) sem nenhum ganho — só a nota de regularidade precisa da exclusão.
  */
 export function calcularRetrospectiva(periodo: string, registros: RegistroPonto[], jornada: Jornada | null, feriados: Set<string>, diasNeutros: Set<string> = new Set()): DadosCalculoRetrospectiva {
   const [dataInicio, dataFim] = limitesDoMes(periodo);
@@ -67,27 +75,32 @@ export function calcularRetrospectiva(periodo: string, registros: RegistroPonto[
   const diasTrabalho = new Set(diasTrabalhoDaJornada(jornada));
   for (let data = dataInicio; data <= dataFim; data = adicionarDia(data)) {
     const objeto = new Date(`${data}T12:00:00`);
-    if (diasTrabalho.has(objeto.getDay()) && !feriados.has(data) && !diasNeutros.has(data)) {
+    if (diasTrabalho.has(objeto.getDay()) && !feriados.has(data)) {
       dias.push(calcularResumoDia(data, registrosPorDia.get(data) ?? [], jornada));
     }
   }
-  const divisor = dias.length || 1;
+  // Subconjunto usado só para a nota de regularidade — o resto dos totais
+  // abaixo usa `dias` (todos os dias reais do período).
+  const diasAvaliados = dias.filter((dia) => !diasNeutros.has(dia.data));
+  const divisorAvaliado = diasAvaliados.length || 1;
+
   const diasTrabalhados = dias.filter((dia) => dia.entrada && dia.saida && (dia.minutosTrabalhados ?? 0) > 0).length;
   // Pontualidade e cumprimento de jornada só fazem sentido com uma jornada
   // configurada — sem ela, `minutosAtraso` nunca é calculado (ver
   // calcularResumoDia) e `cargaHorariaDiariaMinutos` não existe. Tratar a
   // ausência de jornada como "0 dias pontuais/cumpridos" evita inflar a nota
   // artificialmente para funcionários mal configurados.
-  const diasPontuais = jornada ? dias.filter((dia) => !!dia.entrada && (dia.minutosAtraso ?? 0) === 0).length : 0;
-  const diasJornadaCumprida = jornada ? dias.filter((dia) => (dia.minutosTrabalhados ?? 0) >= jornada.cargaHorariaDiariaMinutos).length : 0;
+  const diasPontuais = jornada ? diasAvaliados.filter((dia) => !!dia.entrada && (dia.minutosAtraso ?? 0) === 0).length : 0;
+  const diasJornadaCumprida = jornada ? diasAvaliados.filter((dia) => (dia.minutosTrabalhados ?? 0) >= jornada.cargaHorariaDiariaMinutos).length : 0;
   const diasComAjuste = dias.filter((dia) => [dia.entrada, dia.saidaAlmoco, dia.retornoAlmoco, dia.saida].some((registro) => registro?.editadoPorCorrecao)).length;
   const minutosTrabalhados = dias.reduce((total, dia) => total + (dia.minutosTrabalhados ?? 0), 0);
   const minutosAtraso = dias.reduce((total, dia) => total + (dia.minutosAtraso ?? 0), 0);
-  // Sem dias previstos no período (jornada sem dias de trabalho, ou mês
-  // inteiro em feriados) não há base nenhuma para avaliar regularidade — 0
-  // em vez de 100, para não premiar quem não teve nenhum dia a cumprir.
-  const regularidade = dias.length === 0 ? 0 : Math.round(((diasPontuais / divisor) * REGULARIDADE_PESOS.pontualidade + (diasJornadaCumprida / divisor) * REGULARIDADE_PESOS.jornada + (dias.filter((dia) => !dia.incompleta).length / divisor) * REGULARIDADE_PESOS.ocorrencias) * 100);
-  return { diasPrevistos: dias.length, diasTrabalhados, diasPontuais, diasJornadaCumprida, diasComAjuste, minutosTrabalhados, minutosAtraso, regularidade, dias };
+  // Sem dias avaliados no período (jornada sem dias de trabalho, mês inteiro
+  // em feriados, ou tudo neutro) não há base nenhuma para avaliar
+  // regularidade — 0 em vez de 100, para não premiar quem não teve nenhum
+  // dia a cumprir.
+  const regularidade = diasAvaliados.length === 0 ? 0 : Math.round(((diasPontuais / divisorAvaliado) * REGULARIDADE_PESOS.pontualidade + (diasJornadaCumprida / divisorAvaliado) * REGULARIDADE_PESOS.jornada + (diasAvaliados.filter((dia) => !dia.incompleta).length / divisorAvaliado) * REGULARIDADE_PESOS.ocorrencias) * 100);
+  return { diasPrevistos: diasAvaliados.length, diasTrabalhados, diasPontuais, diasJornadaCumprida, diasComAjuste, minutosTrabalhados, minutosAtraso, regularidade, dias };
 }
 
 function adicionarDia(data: string): string {

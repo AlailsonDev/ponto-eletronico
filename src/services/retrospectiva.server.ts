@@ -54,7 +54,10 @@ export async function construirRetrospectiva(uid: string, usuario: FirebaseFires
     .filter((registro) => registro.data >= inicio && registro.data <= fim);
   const diasNeutros = new Set<string>([
     // Registro retroativo: ponto nunca batido ao vivo, sem validação de
-    // geolocalização — não conta a favor nem contra.
+    // geolocalização — não conta a favor nem contra. Confirmado com dados
+    // reais: um funcionário com vários registros retroativos cravados no
+    // exato horário de início da jornada (padrão impossível numa batida ao
+    // vivo) chegaria a Ouro/Diamante sem nenhuma verificação por trás.
     ...registros.filter((registro) => registro.registroRetroativo).map((registro) => registro.data),
     ...(await diasComAusenciaAprovada(uid, inicio, fim)),
   ]);
