@@ -12,6 +12,21 @@ import { calcularResumoDia } from "@/lib/calculoJornada";
 import { limitesDoMes, mesAtualISO } from "@/lib/formatadores";
 import { mesclarComAusencias, type DiaComAusencia } from "@/lib/mesclarAusencias";
 
+/** Datas ("YYYY-MM-DD") de sábados e domingos dentro do intervalo, inclusive. */
+function listarFinsDeSemana(dataInicioISO: string, dataFimISO: string): string[] {
+  const fins: string[] = [];
+  let atual = new Date(`${dataInicioISO}T12:00:00`);
+  const fimData = new Date(`${dataFimISO}T12:00:00`);
+  while (atual <= fimData) {
+    const diaSemana = atual.getDay();
+    if (diaSemana === 0 || diaSemana === 6) {
+      fins.push(`${atual.getFullYear()}-${String(atual.getMonth() + 1).padStart(2, "0")}-${String(atual.getDate()).padStart(2, "0")}`);
+    }
+    atual = new Date(atual.getFullYear(), atual.getMonth(), atual.getDate() + 1, 12);
+  }
+  return fins;
+}
+
 export interface LinhaRelatorio {
   usuario: Usuario;
   dias: DiaComAusencia[];
@@ -102,12 +117,22 @@ export function useRelatorioAdmin() {
       // Dias só com ausência (nenhum registro de ponto) entram aqui para o
       // detalhamento diário mostrar o motivo — não contam em
       // diasComRegistro/diasIncompletos, que continuam medindo pontos reais.
-      const diasComAusencia = mesclarComAusencias(dias, ausenciasPorUsuario.get(usuario.uid) ?? [])
-        .sort((a, b) => a.data.localeCompare(b.data));
+      const diasComAusencia = mesclarComAusencias(dias, ausenciasPorUsuario.get(usuario.uid) ?? []);
+      // Sábados/domingos sem nenhuma atividade também entram, só para
+      // aparecerem no detalhamento diário (facilita conferir a sequência do
+      // calendário) — se alguém realmente trabalhou no fim de semana, o dia
+      // já veio de `dias` acima e não é duplicado aqui.
+      const datasJaCobertas = new Set(diasComAusencia.map((dia) => dia.data));
+      const diasCompletos = [
+        ...diasComAusencia,
+        ...listarFinsDeSemana(dataInicio, dataFim)
+          .filter((data) => !datasJaCobertas.has(data))
+          .map((data) => ({ data, incompleta: false })),
+      ].sort((a, b) => a.data.localeCompare(b.data));
 
       return {
         usuario,
-        dias: diasComAusencia,
+        dias: diasCompletos,
         diasComRegistro: dias.length,
         diasIncompletos: dias.filter((dia) => dia.incompleta).length,
         minutosTrabalhados: dias.reduce((total, dia) => total + (dia.minutosTrabalhados ?? 0), 0),
@@ -115,7 +140,7 @@ export function useRelatorioAdmin() {
         minutosHoraExtra: dias.reduce((total, dia) => total + (dia.minutosHoraExtra ?? 0), 0),
       };
     });
-  }, [funcionarios, jornadasPorId, registros, ausencias]);
+  }, [funcionarios, jornadasPorId, registros, ausencias, dataInicio, dataFim]);
 
   return {
     anoMesSelecionado,

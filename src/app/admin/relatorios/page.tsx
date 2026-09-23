@@ -75,7 +75,10 @@ async function baixarExcel(linhas: LinhaRelatorio[], anoMes: string) {
   aplicarEstiloCabecalho(detalhamento.getRow(1));
   for (const linha of linhas) {
     for (const dia of linha.dias) {
-      detalhamento.addRow({
+      const diaDaSemana = new Date(`${dia.data}T12:00:00`).getDay();
+      const ehFimDeSemana = diaDaSemana === 0 || diaDaSemana === 6;
+      const temAtividade = !!(dia.entrada || dia.saidaAlmoco || dia.retornoAlmoco || dia.saida);
+      const linhaAdicionada = detalhamento.addRow({
         funcionario: linha.usuario.nome,
         matricula: linha.usuario.matricula,
         data: formatarDataBR(dia.data, true),
@@ -86,12 +89,22 @@ async function baixarExcel(linhas: LinhaRelatorio[], anoMes: string) {
         total: formatarMinutos(dia.minutosTrabalhados),
         atraso: formatarMinutos(dia.minutosAtraso),
         extra: formatarMinutos(dia.minutosHoraExtra),
-        status: dia.ausencia ? RÓTULOS_CATEGORIA_AUSENCIA[dia.ausencia.categoria] : dia.incompleta ? "Incompleto" : "Normal",
+        status: dia.ausencia
+          ? RÓTULOS_CATEGORIA_AUSENCIA[dia.ausencia.categoria]
+          : ehFimDeSemana && !temAtividade
+            ? "Fim de semana"
+            : dia.incompleta ? "Incompleto" : "Normal",
         localizacao: dia.entrada?.geolocalizacaoValidada ? "Validada" : "Não informada",
         distancia: dia.entrada?.distanciaMetros ?? "-",
         precisao: dia.entrada?.precisaoMetros ?? "-",
         motivoAusencia: dia.ausencia?.motivo ?? "-",
       });
+      // Sombreia a linha do fim de semana sem atividade, pra ficar fácil
+      // distinguir de relance ao rolar a planilha inteira.
+      if (ehFimDeSemana && !temAtividade && !dia.ausencia) {
+        linhaAdicionada.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F3F5" } };
+        linhaAdicionada.font = { color: { argb: "FF868E96" } };
+      }
     }
   }
   detalhamento.autoFilter = { from: "A1", to: "O1" };
