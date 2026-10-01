@@ -68,7 +68,7 @@ export function JustificarAusencia({
           className="mt-0.5 h-4 w-4 rounded border-surface-border text-teal-600 focus:ring-2 focus:ring-teal-100"
         />
         <span>
-          <span className="font-display text-sm font-semibold text-ink-900">Faltei em um dia anterior</span>
+          <span className="font-display text-sm font-semibold text-ink-900">Faltou em um dia anterior?</span>
           <span className="mt-1 block font-body text-sm text-ink-600">
             Marque aqui se faltou por atestado médico, folga ou outro motivo — em vez de solicitar um horário, você
             justifica o dia inteiro para o seu gestor avaliar.
