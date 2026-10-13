@@ -27,7 +27,7 @@ export function jornadaConcluidaHoje(registrosHoje: RegistroPonto[]): boolean {
 const RÓTULOS_BOTAO: Record<TipoRegistro, string> = {
   ENTRADA: "Registrar entrada",
   SAIDA_ALMOCO: "Saída para almoço",
-  RETORNO_ALMOCO: "Registrar retorno",
+  RETORNO_ALMOCO: "Retorno do almoço",
   SAIDA: "Registrar saída",
 };
 
