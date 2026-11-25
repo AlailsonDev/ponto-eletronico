@@ -26,7 +26,7 @@ function aplicarEstiloCabecalho(linha: ExcelJS.Row) {
 
 async function baixarExcel(linhas: LinhaRelatorio[], anoMes: string) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Sistema de Ponto Eletrônico";
+  workbook.creator = "CtrlClock";
   workbook.created = new Date();
 
   const resumo = workbook.addWorksheet("Resumo");

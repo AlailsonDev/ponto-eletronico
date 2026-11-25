@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Clock3, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Clock3 } from "lucide-react";
 import Image from "next/image";
 import logoCGM from "@/assets/CGM.png";
 import background from "@/assets/background.svg";
@@ -138,10 +138,9 @@ export default function LoginPage() {
           priority
         />
 
-        <div className="relative z-10 flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-teal-500" />
-          <span className="font-display text-sm font-semibold tracking-wide">
-            SISTEMA DE PONTO ELETRÔNICO
+        <div className="relative z-10 flex items-center">
+          <span className="font-brand text-3xl tracking-wide">
+            CtrlClock
           </span>
         </div>
 
@@ -192,6 +191,10 @@ export default function LoginPage() {
               priority
             />
           </div> */}
+          {/* Nome do sistema na versão mobile (o painel institucional fica oculto) */}
+          <p className="mb-8 font-brand text-3xl tracking-wide text-navy-900 md:hidden">
+            CtrlClock
+          </p>
           <div className="mb-12 flex items-center justify-start gap-1">
   <Image
     src={arvoreTecnologia}

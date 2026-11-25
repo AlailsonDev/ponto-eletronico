@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import clsx from "clsx";
 import { doc, onSnapshot } from "firebase/firestore";
-import { LogOut, Menu, ShieldCheck, X } from "lucide-react";
+import { Clock3, LogOut, Menu, X } from "lucide-react";
 import { logout } from "@/services/auth.service";
 import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase/config";
@@ -102,9 +102,9 @@ export function AppHeader({ usuario }: { usuario: Usuario }) {
     <header className="relative flex items-center justify-between border-b-4 border-yellow-300 bg-navy-800 px-4 py-3 text-white shadow-sm sm:px-6">
       <div className="flex items-center gap-8">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-yellow-300" />
-          <span className="font-display text-sm font-semibold text-white">
-            Ponto Eletrônico
+          <Clock3 className="h-5 w-5 text-yellow-300" />
+          <span className="font-brand text-sm text-white">
+            CtrlClock
           </span>
         </div>
 

@@ -46,6 +46,7 @@ const config: Config = {
         display: ["var(--font-sora)", "sans-serif"],
         body: ["var(--font-inter)", "sans-serif"],
         mono: ["var(--font-plex-mono)", "monospace"],
+        brand: ["var(--font-audiowide)", "sans-serif"],
       },
       borderRadius: {
         card: "12px",
